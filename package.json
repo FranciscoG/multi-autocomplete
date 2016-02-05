@@ -1,0 +1,31 @@
+{
+  "name": "multi-autocomplete",
+  "version": "0.1.0",
+  "description": "A plugin that autocompletes based off of multiple datasets and in multiple points in one input text box. Similar to Slack's autocomplete",
+  "main": "dist/multi-autocomplete.js",
+  "keywords": [
+    "typeahead",
+    "autocomplete"
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FranciscoG/multi-autocomplete.git"
+  },
+  "author": "FranciscoG",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FranciscoG/multi-autocomplete/issues"
+  },
+  "homepage": "https://github.com/FranciscoG/multi-autocomplete#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.5.1"
+  }
+}

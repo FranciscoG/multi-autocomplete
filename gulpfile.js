@@ -15,8 +15,8 @@ function handleError(err) {
  gulp.task('minify', function() {
    return gulp.src('src/multi-autocomplete.js')
      .pipe(uglify())
-     .pipe(rename("multi-autocomplete.min.js"))
      .on("error", handleError)
+     .pipe(rename("multi-autocomplete.min.js"))
      .pipe(gulp.dest('dist'));
  });
 
@@ -26,6 +26,7 @@ function handleError(err) {
 
  gulp.task('move', function() {
    return gulp.src('src/multi-autocomplete.js')
+     .on("error", handleError)
      .pipe(gulp.dest('dist'));
  });
 

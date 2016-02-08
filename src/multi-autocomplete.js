@@ -56,10 +56,55 @@ MultiComplete.prototype = {
     if (console && console.warn) { console.warn("mutli-autocomplete:",stuff) ;}
   },
 
+  goForward: function(arr, start) {
+    // find the next space in the array starting at 
+    var returnIndex = arr.length
+    for (var i = start, len = arr.length; i < len; i++) {
+      if (arr[i] === " ") {
+        returnIndex = i;
+        break;
+      }
+    }
+    return returnIndex;
+
+  },
+
+  goBackward: function(arr, start) {
+    // find the next space in the array going backwards in the array
+    var returnIndex = 0;
+    for (var i = start; i > -1; i--) {
+      if (arr[i] === " ") {
+        returnIndex = i + 1; // it will return the index of the space so we add 1
+        break;
+      }
+    }
+    return returnIndex;
+  },
+
   onKeyUp : function(evt) {
     var val = this.$input.val();
+
     if (val) {
       var cursorPos = this.$input.get(0).selectionStart;
+      var valArr = val.split("");
+      var leftChar = valArr[cursorPos - 1];
+      
+      var endIndex;
+      if (valArr[cursorPos] === " ") {
+        endIndex = cursorPos;
+      } else {
+        endIndex = mc.goForward(valArr, cursorPos);
+      }
+
+      var startIndex;
+      if (leftChar === " ") {
+        startIndex = cursorPos;
+      } else {
+        startIndex = mc.goBackward(valArr, cursorPos);
+      }
+
+      console.log(startIndex,endIndex, val.substring(startIndex,endIndex));
+      return;
 
       if (cursorPos !== this.lastCursorPos || val === "" ) {
 
@@ -112,7 +157,7 @@ MultiComplete.prototype = {
     console.log(filterStr);
     var actualStr = filterStr.substr(1);
     var dataToFilter = this.datasets[this.markerKey];
-    
+
     dataToFilter.forEach(function(el,i,r){
       if (el.indexOf(actualStr) >= 0) {
         console.log("found:", el);
@@ -142,4 +187,6 @@ MultiComplete.prototype = {
   3. split string separated by space into array.  Iterate over earch item looking for markers
 
   issue: have to get position in string for future in-place replacement and that might be difficult especially if the same text occurs in multiple places in the string
+
+  4. split string into individual characters.  Starting at getSelection index, chech if index on each side (+1/-1) is a space.  if -1 is space, check for next space going forward (position direction).  Vice Versa if +1 is a space.  
  */

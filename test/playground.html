@@ -13,7 +13,7 @@
         <ul id="chatOutput">
           <li>hello</li>
         </ul>
-        <div id="preview-container"></div>
+        <ul id="preview-container"></ul>
         <input type="text" id="chatInput" placeholder="enter a chat message" autocomplete="off" maxlength="255" />
         <p>Press enter to submit chat</p>
       </div>
@@ -73,7 +73,7 @@
 
       var mc = new MultiComplete({
         input: "#chatInput",
-        previewContainer: "#preview-container",
+        output: "#preview-container",
         datasets : datasets
       });
 

@@ -66,6 +66,7 @@ body {
 ul {
   margin: 0;
   padding: 0;
+  list-style-type: none;
 }
 
 .example-data {
@@ -88,4 +89,16 @@ ul {
 .example-data ul li {
   margin: 0;
   padding: 5px 0 10px;
+}
+
+#preview-container {
+  position: absolute;
+  bottom: 79px;
+  max-height: 200px;
+  overflow: auto;
+  padding: 10px;
+}
+
+#preview-container li.active {
+  color: #fff;
 }

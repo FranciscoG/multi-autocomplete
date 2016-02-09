@@ -2,6 +2,10 @@
 function MultiComplete(options){
   'use strict';
 
+  if (!(this instanceof MultiComplete)) {
+    return new MultiComplete(options);
+  }
+
   /**
    * User defined options, all required
    */
@@ -42,10 +46,6 @@ function MultiComplete(options){
     del   : 8
   };
 
-  this.currentText = "";
-  this.lastCursorPos = 0;
-  this.startPosition = null;
-
   $('body').on('keyup', options.input, this.onKeyUp.bind(this));
 
 }
@@ -72,9 +72,9 @@ MultiComplete.prototype = {
   goBackward: function(arr, start) {
     // find the next space in the array going backwards in the array
     var returnIndex = 0;
-    for (var i = start; i > -1; i--) {
+    for (var i = start - 1; i >= 0; i--) {
       if (arr[i] === " ") {
-        returnIndex = i + 1; // it will return the index of the space so we add 1
+        returnIndex = i;
         break;
       }
     }
@@ -89,81 +89,42 @@ MultiComplete.prototype = {
       var valArr = val.split("");
       var leftChar = valArr[cursorPos - 1];
       
+      var startIndex;
       var endIndex;
+
       if (valArr[cursorPos] === " ") {
         endIndex = cursorPos;
       } else {
         endIndex = mc.goForward(valArr, cursorPos);
       }
 
-      var startIndex;
       if (leftChar === " ") {
         startIndex = cursorPos;
       } else {
         startIndex = mc.goBackward(valArr, cursorPos);
       }
 
-      console.log(startIndex,endIndex, val.substring(startIndex,endIndex));
-      return;
+      var currentWord = val.substring(startIndex,endIndex);
 
-      if (cursorPos !== this.lastCursorPos || val === "" ) {
-
-        this.lastCursorPos = cursorPos;
-        var recentChar = val.charAt(cursorPos - 1);
-
-        // console.log("cursorPos", cursorPos);
-        // console.log("recentChar:", recentChar);
-
-        if (this.markers.test(recentChar)) {
-          this.markerKey = recentChar;
-          this.startPosition = cursorPos - 1;
-          this.shouldTrack = true;
-        }
-
-        if (this.shouldTrack) {
-          this.beginFiltering();
-        }
-
-        if (recentChar === " " || val === "") {
-          this.stopFiltering();
-          this.startPosition = null;
-        }
-
+      // console.log(startIndex,endIndex, currentWord);
+      if (this.markers.test(currentWord.charAt(0))) {
+        this.beginFiltering(currentWord.charAt(0), currentWord.substr(1));
       }
+      return;
     }
     
   },
 
-  beginFiltering: function(){
-    var val = this.$input.val();
-    var filterStr;
-    if (this.startPosition !== null) {
-      filterStr = val.substring(this.startPosition, this.lastCursorPos);
+  beginFiltering: function(marker, filterStr){
+    if (!this.datasets[marker]) { return; }
 
-      if (!/\s/.test(filterStr)) {
-        this.findData(filterStr);
-      } else {
-        this.stopFiltering();
-      }
-
-    }
-  },
-
-  stopFiltering: function() {
-    this.shouldTrack = false;
-  },
-
-  findData: function(filterStr){
-    console.log(filterStr);
-    var actualStr = filterStr.substr(1);
-    var dataToFilter = this.datasets[this.markerKey];
-
+    var dataToFilter = this.datasets[marker];
     dataToFilter.forEach(function(el,i,r){
-      if (el.indexOf(actualStr) >= 0) {
+      if (el.indexOf(filterStr) >= 0) {
         console.log("found:", el);
       }
     });
-
+    console.log("-------");
   },
 
   replaceInPlace: function(str){
@@ -174,6 +135,9 @@ MultiComplete.prototype = {
 
 };
 
+if (typeof exports === "object") {
+  module.exports = MultiComplete;
+}
 
 /*
   ideas:

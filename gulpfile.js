@@ -30,6 +30,17 @@ function handleError(err) {
      .pipe(gulp.dest('dist'));
  });
 
+/**********************************************
+ * Run jasmine test
+ */
+ 
+ var jasmine = require('gulp-jasmine');
+ gulp.task('test', function () {
+  return gulp.src('test/spec/test.js')
+    // gulp-jasmine works on filepaths so you can't have any plugins before it 
+    .pipe(jasmine());
+});
+
 
 /**********************************************
  * Gulp default and Watch stuff

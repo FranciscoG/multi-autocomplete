@@ -33,13 +33,14 @@ function MultiComplete(options){
   for (var key in this.datasets) {
     markers += key;
   }
-  this.markers = new RegExp("["+markers+"]", "i");
+  this.markersRegex = new RegExp("["+markers+"]", "i");
 
   /**
    * User defined options, optional (with defaults)
    */
   this.outputDom = options.outputDom || "li";
-  
+  this.activeClass = options.activeClass || "active";
+
   this.keycodes = {
     up    : 38, 
     down  : 40, 
@@ -49,12 +50,14 @@ function MultiComplete(options){
     esc   : 27,
     tab   : 9,
     shift : 16,
-    del   : 8
+    del   : 8,  // mac, still need backspace
+    space : 32
   };
 
   this.info = {};
-  $('body').on('keyup', options.input, this.onKeyUp.bind(this));
-
+  this._isPreviewing = false;
+  $('body').on('keyup', this.input, $.proxy(this.onKeyUp, this));
+  // $('body').on('keyup', this.output, $.proxy(this.onSelectItem, this));
 }
 
 MultiComplete.prototype = {
@@ -120,10 +123,10 @@ MultiComplete.prototype = {
 
       var firstCharOfWord = currentWord.charAt(0);
       // console.log(startIndex,endIndex, currentWord);
-      if (this.markers.test(firstCharOfWord)) {
+      if (this.markersRegex.test(firstCharOfWord)) {
         this.info.activeMarker = firstCharOfWord;
         this.beginFiltering(firstCharOfWord, currentWord.substr(1));
-        this.bindPreview(evt.keyCode);
+        this.navPreview(evt.keyCode);
       } else {
         this.clearPreview();
       }
@@ -135,64 +138,80 @@ MultiComplete.prototype = {
     if (!val || !this.info.activeMarker) {
       this.clearPreview();
     }
-    
   },
 
   clearPreview: function() {
-    document.querySelector(this.output).innerHTML = "";
+    this.$output.empty();
+    this._isPreviewing = false;
   },
 
   beginFiltering: function(marker, filterStr){
     if (!this.datasets[marker]) { return; }
+    // we don't want to filter when we're still traversing the preview list
+    if (this._isPreviewing) { return; }
 
     var dataToFilter = this.datasets[marker];
-    var filteredData = dataToFilter.filter(function(el,i,r){
+    var filteredData = $.grep(dataToFilter, function(el){
       return el.indexOf(filterStr) >= 0;
     });
     this.addToPreview(filteredData);
   },
 
   addToPreview: function(filteredData) {
-    var prev = document.querySelector(this.output);
     this.clearPreview();
     var itemDom = this.outputDom;
 
     var tmpFrag = document.createDocumentFragment();
-    filteredData.forEach(function(el,i){
+    $.each(filteredData, function(i, el){
       var item = document.createElement(itemDom);
       item.textContent = el;
       if (i === 0) { item.classList.add("active"); }
       tmpFrag.appendChild(item);
     });
-    prev.appendChild(tmpFrag);
+    this.$output.append(tmpFrag);
   },
 
-  bindPreview: function(keyCode) {
-    var $activeItem = this.$output.find('.active');
-    var newItem;
-
+  navPreview: function(keyCode) {
+    var modifier;
     if (keyCode === this.keycodes.up) {
-      $activeItem.removeClass('active');
-      newItem = $activeItem.index() - 1;
+      modifier = -1;
+      this._isPreviewing = true;
     } else if (keyCode === this.keycodes.down) {
-      $activeItem.removeClass('active');
-      newItem = $activeItem.index() + 1;
+      modifier = 1;
+      this._isPreviewing = true;
+    } else {
+      this._isPreviewing = false;
+      return; // do nothing if up/down not pressed
     }
 
-    var childLen = this.$output.children().length - 1;
+    var $collection = this.$output.children();
+    var activeIndex = this.$output.find('.' + this.activeClass).index();
+    var newItem = activeIndex + modifier;
+
+    var childLen = $collection.length;
     if (newItem < 0) {
-      newItem = childLen;
-    } else if (newItem >= childLen) {
+      newItem = childLen - 1;
+    } else if (newItem > childLen - 1) {
       newItem = 0;
     }
-    console.log(newItem);
-    this.$output.children().eq(newItem).addClass('active');
+
+    $collection.removeClass('active').eq(newItem).addClass(this.activeClass);
+    var newText = this.$output.find('.' + this.activeClass).text();
+    this.replaceInPlace(newText);
   },
 
   replaceInPlace: function(str){
     var val = this.info.val;
-    var newVal = val.slice(0, this.startPosition) +  str + val.slice(this.lastCursorPos, val.length - 1);
+    var newVal = val.slice(0, this.info.start) + this.info.activeMarker + str + val.slice(this.info.end, val.length - 1);
+    this.$input.val(newVal);
     console.log(newVal);
+  },
+
+  onSelectItem: function(evt) {
+    if (evt.keyCode === this.keycodes.enter) {
+      var newVal = $(this).find('.active').text();
+      this.replaceInPlace(newVal);
+    }
   }
 
 };

@@ -41,6 +41,21 @@ function MultiComplete(options){
   this.outputDom = options.outputDom || "li";
   this.activeClass = options.activeClass || "active";
 
+  /**
+   * This is a callback function that will be run immediately after
+   * data is filtered so you can do something else to it before sending
+   * it to the screen preview container
+   * @type {Function}
+   */
+  this.callback = options.callback;
+
+  /**
+   * Runs this function on the string before putting it back into 
+   * the input
+   * @type {Function}
+   */
+  this.beforeReplace = options.beforeReplace;
+
   this.keycodes = {
     up    : 38, 
     down  : 40, 
@@ -57,7 +72,7 @@ function MultiComplete(options){
   this.info = {};
   this._isPreviewing = false;
   $('body').on('keyup', this.input, $.proxy(this.onKeyUp, this));
-  // $('body').on('keyup', this.output, $.proxy(this.onSelectItem, this));
+  $('body').on('keydown', this.input, $.proxy(this.onKeyDown, this));
 }
 
 MultiComplete.prototype = {
@@ -88,6 +103,14 @@ MultiComplete.prototype = {
       }
     }
     return returnIndex;
+  },
+
+  onKeyDown: function(evt){
+    if (this._isPreviewing && (evt.keyCode === this.keycodes.up || evt.keyCode === this.keycodes.down)) {
+      console.log("prevent");
+      evt.preventDefault();
+      return false;
+    }
   },
 
   onKeyUp : function(evt) {
@@ -154,6 +177,9 @@ MultiComplete.prototype = {
     var filteredData = $.grep(dataToFilter, function(el){
       return el.indexOf(filterStr) >= 0;
     });
+    if (typeof this.callback === "function") {
+      filteredData = this.callback(filteredData);
+    }
     this.addToPreview(filteredData);
   },
 
@@ -172,15 +198,19 @@ MultiComplete.prototype = {
   },
 
   navPreview: function(keyCode) {
+    // console.log(this.info);
     var modifier;
     if (keyCode === this.keycodes.up) {
       modifier = -1;
       this._isPreviewing = true;
+      this.$output.get(0).focus();
     } else if (keyCode === this.keycodes.down) {
       modifier = 1;
       this._isPreviewing = true;
+      this.$output.get(0).focus();
     } else {
       this._isPreviewing = false;
+      this.$input.get(0).focus();
       return; // do nothing if up/down not pressed
     }
 
@@ -202,18 +232,30 @@ MultiComplete.prototype = {
 
   replaceInPlace: function(str){
     var val = this.info.val;
+    if (typeof this.beforeReplace === "function") {
+      str = this.beforeReplace(str);
+    }
     var newVal = val.slice(0, this.info.start) + this.info.activeMarker + str + val.slice(this.info.end, val.length - 1);
+    this.info.end = this.info.start + str.length + 1;
     this.$input.val(newVal);
-    console.log(newVal);
+    this.setCursorPosition(this.info.end);
+    console.log(this.info.end, newVal);
   },
 
-  onSelectItem: function(evt) {
-    if (evt.keyCode === this.keycodes.enter) {
-      var newVal = $(this).find('.active').text();
-      this.replaceInPlace(newVal);
+  setCursorPosition: function(pos){
+    var range;
+    var elem = this.$input.get(0);
+    if (elem.createTextRange) {
+        range = elem.createTextRange();
+        range.move('character', pos);
+        range.select();
+    } else {
+        elem.focus();
+        if (elem.selectionStart !== undefined) {
+            elem.setSelectionRange(pos, pos);
+        }
     }
   }
-
 };
 
 if (typeof exports === "object") {

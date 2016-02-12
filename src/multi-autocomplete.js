@@ -36,15 +36,13 @@ function MultiComplete(options){
     this.warn("input not set or doesn't exist");
     return;
   }
-  this.inputNode = this.$input.get(0);
-
+  
   this.$output = $(this.opts.output);
   if (!this.opts.output || !this.$output.length) {
     this.warn("preview container not set or doesn't exist");
     return;
   }
-  this.outputNode = this.$output.get(0);
-
+  
   if (!this.opts.datasets) {
     this.warn("datasets missing");
     return;
@@ -55,6 +53,14 @@ function MultiComplete(options){
   }
   this.markersRegex = new RegExp("["+markers+"]", "i");
 
+  /**
+   * Caching important DOM nodes when we need to use
+   * straight up Javascript instead of jQuery
+   * @type {[type]}
+   */
+  this.inputNode = this.$input.get(0);
+  this.outputNode = this.$output.get(0);
+
   this.keycodes = {
     up     : 38,
     down   : 40,
@@ -64,8 +70,8 @@ function MultiComplete(options){
     esc    : 27,
     tab    : 9,
     shift  : 16,
-    del    : 8, // mac Delete, win BackSpace
-    winDel : 46, // windows delete
+    backspace : 8,
+    del    : 46,
     space  : 32
   };
 
@@ -95,16 +101,30 @@ MultiComplete.prototype = {
   onKeyDown: function(e){
     var self = this;
     var elem = this.inputNode;
+    var pos;
+
     if (this.ignoreKey) {
       e.preventDefault();
       return false;
     }
+
     if (e.keyCode === this.keycodes.up || e.keyCode === this.keycodes.down) {
-        var pos = elem.selectionStart;
+        pos = this.info.end;
         this.setCursorPosition(pos);
         this.ignoreKey = true;
         setTimeout(function(){self.ignoreKey=false;},1);
         e.preventDefault();
+    }
+
+    if (e.keyCode === this.keycodes.right && this._isPreviewing) {
+      pos = this.info.end;
+      if (pos >= this.info.val.length - 1) {
+        this.$input.val(this.$input.val() + ' ');
+      }
+      this.setCursorPosition(pos + 1);
+      this.ignoreKey = true;
+      setTimeout(function(){self.ignoreKey=false;},1);
+      e.preventDefault();
     }
 
   },
@@ -242,8 +262,9 @@ MultiComplete.prototype = {
   },
 
   scrollOutput: function($elem){
-    $elem.get(0).scrollIntoView(false);
-    return;
+    if ($elem.length) {
+      $elem.get(0).scrollIntoView(false);
+    }
   },
 
   replaceInPlace: function(str){

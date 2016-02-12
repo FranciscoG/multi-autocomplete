@@ -7,73 +7,72 @@ function MultiComplete(options){
   }
 
   /**
-   * User defined options, required
+   * Default options
+   * @type {Object}
+   */
+  var defaults = {
+    outputDom : "li",
+    activeClass : "active",
+    beforeReplace: null,
+    getActiveText : null,
+    outputTemplate : null
+  };
+
+  /**
+   * merge options and defaults where user options
+   * override internal defaults
+   * @type {Object}
+   */
+  this.opts = $.extend(defaults, options);
+
+  /**
+   * Caching jQuery selectors and checking for 
+   * required options
    */
   
-  this.input = options.input;
-  this.$input = $(options.input)
-  if (!options.input || !this.$input.length) {
+  this.$input = $(this.opts.input);
+  if (!this.opts.input || !this.$input.length) {
     this.warn("input not set or doesn't exist");
     return;
   }
+  this.inputNode = this.$input.get(0);
 
-  this.output = options.output;
-  this.$output = $(options.output);
-  if (!options.output || !this.$output.length) {
+  this.$output = $(this.opts.output);
+  if (!this.opts.output || !this.$output.length) {
     this.warn("preview container not set or doesn't exist");
     return;
   }
+  this.outputNode = this.$output.get(0);
 
-  if (!options.datasets) {
+  if (!this.opts.datasets) {
     this.warn("datasets missing");
     return;
   }
-  this.datasets = options.datasets;
   var markers = "";
-  for (var key in this.datasets) {
+  for (var key in this.opts.datasets) {
     markers += key;
   }
   this.markersRegex = new RegExp("["+markers+"]", "i");
 
-  /**
-   * User defined options, optional (with defaults)
-   */
-  this.outputDom = options.outputDom || "li";
-  this.activeClass = options.activeClass || "active";
-
-  /**
-   * This is a callback function that will be run immediately after
-   * data is filtered so you can do something else to it before sending
-   * it to the screen preview container
-   * @type {Function}
-   */
-  this.callback = options.callback;
-
-  /**
-   * Runs this function on the string before putting it back into 
-   * the input
-   * @type {Function}
-   */
-  this.beforeReplace = options.beforeReplace;
-
   this.keycodes = {
-    up    : 38, 
-    down  : 40, 
-    left  : 37,
-    right : 39, 
-    enter : 13, 
-    esc   : 27,
-    tab   : 9,
-    shift : 16,
-    del   : 8, // mac Delete, win BackSpace
-    winDel: 46, // windows delete
-    space : 32
+    up     : 38,
+    down   : 40,
+    left   : 37,
+    right  : 39,
+    enter  : 13,
+    esc    : 27,
+    tab    : 9,
+    shift  : 16,
+    del    : 8, // mac Delete, win BackSpace
+    winDel : 46, // windows delete
+    space  : 32
   };
 
   this.info = {};
   this._isPreviewing = false;
-  $('body').on('keyup', this.input, $.proxy(this.onKeyUp, this));
-  $('body').on('keydown', this.input, $.proxy(this.onKeyDown, this));
+  $('body').on('keyup', this.opts.input, $.proxy(this.onKeyUp, this));
+  this.ignoreKey = false;
+  $('body').on('keydown keypress', this.opts.input, $.proxy(this.onKeyDown, this));
 }
 
 MultiComplete.prototype = {
@@ -82,30 +81,38 @@ MultiComplete.prototype = {
     if (console && console.warn) { console.warn("mutli-autocomplete:",stuff) ;}
   },
 
-  goForward: function(str, start) {
+  getNextSpace: function(str, start) {
     var returnIndex = str.substring(start, str.length).indexOf(' ');
     return returnIndex < 0 ? str.length : returnIndex;
   },
 
-  goBackward: function(str, end) {
+  getPrevSpace: function(str, end) {
     var returnIndex =  str.substring(0, end).lastIndexOf(' ');
     return returnIndex < 0 ? 0 : returnIndex + 1;
   },
 
-  onKeyDown: function(evt){
-    var keys = evt.keyCode === this.keycodes.up || evt.keyCode === this.keycodes.down;
-    if (this._isPreviewing && keys) {
-      console.log("prevent");
-      evt.preventDefault();
+  onKeyDown: function(e){
+    var self = this;
+    var elem = this.inputNode;
+    if (this.ignoreKey) {
+      e.preventDefault();
       return false;
     }
+    if (e.keyCode === this.keycodes.up || e.keyCode === this.keycodes.down) {
+        var pos = elem.selectionStart;
+        this.setCursorPosition(pos);
+        this.ignoreKey = true;
+        setTimeout(function(){self.ignoreKey=false;},1);
+        e.preventDefault();
+    }
+
   },
 
   onKeyUp : function(evt) {
-    var val = this.$input.val();
+    var val = this.inputNode.value;
 
     if (val) {
-      var cursorPos = this.$input.get(0).selectionStart;
+      var cursorPos = this.inputNode.selectionStart;
       var leftChar = val[cursorPos - 1];
       
       var startIndex;
@@ -114,13 +121,13 @@ MultiComplete.prototype = {
       if (val[cursorPos] === " ") {
         endIndex = cursorPos;
       } else {
-        endIndex = this.goForward(val, cursorPos);
+        endIndex = this.getNextSpace(val, cursorPos);
       }
 
       if (leftChar === " ") {
         startIndex = cursorPos;
       } else {
-        startIndex = this.goBackward(val, cursorPos);
+        startIndex = this.getPrevSpace(val, cursorPos);
       }
 
       var currentWord = val.substring(startIndex,endIndex);
@@ -135,7 +142,7 @@ MultiComplete.prototype = {
       var firstCharOfWord = currentWord.charAt(0);
       if (this.markersRegex.test(firstCharOfWord)) {
         this.info.activeMarker = firstCharOfWord;
-        this.beginFiltering(firstCharOfWord, currentWord);
+        this.beginFiltering(firstCharOfWord, currentWord.substr(1));
         this.navPreview(evt.keyCode);
       } else {
         this.clearPreview();
@@ -155,11 +162,11 @@ MultiComplete.prototype = {
   },
 
   beginFiltering: function(marker, filterStr){
-    if (!this.datasets[marker]) { return; }
+    if (!this.opts.datasets[marker]) { return; }
     // we don't want to filter when we're still traversing the preview list
     if (this._isPreviewing) { return; }
 
-    var dataToFilter = this.datasets[marker];
+    var dataToFilter = this.opts.datasets[marker];
     var filteredData = $.grep(dataToFilter, function(el){
       return el.indexOf(filterStr) >= 0;
     });
@@ -169,13 +176,19 @@ MultiComplete.prototype = {
 
   addToPreview: function(filteredData) {
     this.clearPreview();
-    var itemDom = this.outputDom;
+    var self = this;
 
     var tmpFrag = document.createDocumentFragment();
     $.each(filteredData, function(i, el){
-      var item = document.createElement(itemDom);
-      item.textContent = el;
-      if (i === 0) { item.classList.add("active"); }
+      var item = document.createElement(self.opts.outputDom);
+      
+      if (typeof self.opts.outputTemplate === 'function') {
+        item.innerHTML = self.opts.outputTemplate(self.info.activeMarker, el);
+      } else {
+        item.textContent = el;
+      }
+      
+      if (i === 0) { item.classList.add(self.opts.activeClass); }
       tmpFrag.appendChild(item);
     });
     this.$output.append(tmpFrag);
@@ -187,19 +200,19 @@ MultiComplete.prototype = {
     if (keyCode === this.keycodes.up) {
       modifier = -1;
       this._isPreviewing = true;
-      this.$output.get(0).focus();
+      this.$output.focus();
     } else if (keyCode === this.keycodes.down) {
       modifier = 1;
       this._isPreviewing = true;
-      this.$output.get(0).focus();
+      this.$output.focus();
     } else {
       this._isPreviewing = false;
-      this.$input.get(0).focus();
+      this.$input.focus();
       return; // do nothing if up/down not pressed
     }
 
     var $collection = this.$output.children();
-    var activeIndex = this.$output.find('.' + this.activeClass).index();
+    var activeIndex = this.$output.find('.' + this.opts.activeClass).index();
     var newItem = activeIndex + modifier;
 
     var childLen = $collection.length;
@@ -209,23 +222,41 @@ MultiComplete.prototype = {
       newItem = 0;
     }
 
-    $collection.removeClass('active').eq(newItem).addClass(this.activeClass);
-    var newText = this.$output.find('.' + this.activeClass).text();
+    $collection.removeClass(this.opts.activeClass).eq(newItem).addClass(this.opts.activeClass);
+    var $newActive = this.$output.find('.' + this.opts.activeClass);
+    this.scrollOutput($newActive);
+
+    var newText;
+    if (typeof this.opts.getActiveText === "function") {
+      console.log('we here');
+      newText = this.opts.getActiveText($newActive);
+    } else {
+      newText = $newActive.text();
+    }
+    console.log(newText);
+  
     this.replaceInPlace(newText);
+  },
+
+  scrollOutput: function($elem){
+    $elem.get(0).scrollIntoView(false);
+    return;
   },
 
   replaceInPlace: function(str){
     var val = this.info.val;
+    if (typeof this.opts.beforeReplace === 'function') {
+      str = this.opts.beforeReplace(str, this.info.activeMarker);
+    }
     var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
     this.info.end = this.info.start + str.length + 1;
     this.$input.val(newVal);
     this.setCursorPosition(this.info.end);
-    console.log(this.info.end, newVal);
   },
 
   setCursorPosition: function(pos){
     var range;
-    var elem = this.$input.get(0);
+    var elem = this.inputNode;
     if (elem.createTextRange) {
         range = elem.createTextRange();
         range.move('character', pos);

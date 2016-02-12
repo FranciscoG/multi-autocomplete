@@ -94,9 +94,10 @@ ul {
 #preview-container {
   position: absolute;
   bottom: 79px;
-  max-height: 200px;
-  overflow: auto;
+  max-height: 300px;
+  overflow: hidden;
   padding: 10px;
+  width: 80%;
 }
 
 #preview-container li.active {

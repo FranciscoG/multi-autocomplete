@@ -65,7 +65,8 @@ function MultiComplete(options){
     esc   : 27,
     tab   : 9,
     shift : 16,
-    del   : 8,  // mac, still need backspace
+    del   : 8, // mac Delete, win BackSpace
+    winDel: 46, // windows delete
     space : 32
   };
 
@@ -82,31 +83,18 @@ MultiComplete.prototype = {
   },
 
   goForward: function(str, start) {
-    // find the next space in the array starting at 
-    var returnIndex = strLen = str.length;
-    for (var i = start; i < strLen; i++) {
-      if (str[i] === " ") {
-        returnIndex = i;
-        break;
-      }
-    }
-    return returnIndex;
+    var returnIndex = str.substring(start, str.length).indexOf(' ');
+    return returnIndex < 0 ? str.length : returnIndex;
   },
 
-  goBackward: function(str, start) {
-    // find the next space in the array going backwards in the array
-    var returnIndex = 0;
-    for (var i = start - 1; i >= 0; i--) {
-      if (str[i] === " ") {
-        returnIndex = i + 1;
-        break;
-      }
-    }
-    return returnIndex;
+  goBackward: function(str, end) {
+    var returnIndex =  str.substring(0, end).lastIndexOf(' ');
+    return returnIndex < 0 ? 0 : returnIndex + 1;
   },
 
   onKeyDown: function(evt){
-    if (this._isPreviewing && (evt.keyCode === this.keycodes.up || evt.keyCode === this.keycodes.down)) {
+    var keys = evt.keyCode === this.keycodes.up || evt.keyCode === this.keycodes.down;
+    if (this._isPreviewing && keys) {
       console.log("prevent");
       evt.preventDefault();
       return false;
@@ -145,7 +133,6 @@ MultiComplete.prototype = {
       };
 
       var firstCharOfWord = currentWord.charAt(0);
-      // console.log(startIndex,endIndex, currentWord);
       if (this.markersRegex.test(firstCharOfWord)) {
         this.info.activeMarker = firstCharOfWord;
         this.beginFiltering(firstCharOfWord, currentWord.substr(1));
@@ -154,7 +141,6 @@ MultiComplete.prototype = {
         this.clearPreview();
       }
 
-      // console.log(this.info);
       return;
     }
 

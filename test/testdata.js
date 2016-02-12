@@ -9,12 +9,9 @@ var datasets = {
     'wacky'
   ],
   ":" : [
-    'heart',
-    'smile',
     'cat',
     'kappa',
     'rainbow',
-    'named',
     'smiley',
     'open_mouth',
     'grin',

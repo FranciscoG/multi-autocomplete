@@ -13,13 +13,14 @@ function MultiComplete(options){
   var defaults = {
     outputDom : "li",
     activeClass : "active",
+    fuzzyFilter : true,
     beforeReplace: null,
     getActiveText : null,
     outputTemplate : null
   };
 
   /**
-   * merge options and defaults where user options
+   * merge options and defaults where user options will
    * override internal defaults
    * @type {Object}
    */
@@ -166,9 +167,14 @@ MultiComplete.prototype = {
     // we don't want to filter when we're still traversing the preview list
     if (this._isPreviewing) { return; }
 
+    var self = this;
     var dataToFilter = this.opts.datasets[marker];
     var filteredData = $.grep(dataToFilter, function(el){
-      return el.indexOf(filterStr) >= 0;
+      if (self.opts.fuzzyFilter) {
+        return el.indexOf(filterStr) >= 0;
+      } else {
+        return el.indexOf(filterStr) === 0;
+      }
     });
 
     this.addToPreview(filteredData);
@@ -195,7 +201,6 @@ MultiComplete.prototype = {
   },
 
   navPreview: function(keyCode) {
-    // console.log(this.info);
     var modifier;
     if (keyCode === this.keycodes.up) {
       modifier = -1;
@@ -228,12 +233,10 @@ MultiComplete.prototype = {
 
     var newText;
     if (typeof this.opts.getActiveText === "function") {
-      console.log('we here');
       newText = this.opts.getActiveText($newActive);
     } else {
       newText = $newActive.text();
     }
-    console.log(newText);
   
     this.replaceInPlace(newText);
   },

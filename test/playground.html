@@ -80,6 +80,7 @@
         input: "#chatInput",
         output: "#preview-container",
         datasets : datasets,
+        fuzzyFilter : false,
         beforeReplace: function(str, marker) {
           if (marker === ":") {
             return ":" + str + ":";

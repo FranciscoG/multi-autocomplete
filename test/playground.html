@@ -75,17 +75,7 @@
       var mc = new MultiComplete({
         input: "#chatInput",
         output: "#preview-container",
-        datasets : datasets,
-        // callback : function(arr) {
-        //   return $.map(arr, function(el, i){
-        //     if (el.charAt(0) === ":") {
-        //       return el.substr(1);
-        //     }
-        //   });
-        // },
-        beforeReplace: function(str){
-          return (str.charAt(0) === ":") ? str.substr(1) : str;
-        }
+        datasets : datasets
       });
 
     </script>

@@ -135,7 +135,7 @@ MultiComplete.prototype = {
       var firstCharOfWord = currentWord.charAt(0);
       if (this.markersRegex.test(firstCharOfWord)) {
         this.info.activeMarker = firstCharOfWord;
-        this.beginFiltering(firstCharOfWord, currentWord.substr(1));
+        this.beginFiltering(firstCharOfWord, currentWord);
         this.navPreview(evt.keyCode);
       } else {
         this.clearPreview();
@@ -163,9 +163,7 @@ MultiComplete.prototype = {
     var filteredData = $.grep(dataToFilter, function(el){
       return el.indexOf(filterStr) >= 0;
     });
-    if (typeof this.callback === "function") {
-      filteredData = this.callback(filteredData);
-    }
+
     this.addToPreview(filteredData);
   },
 
@@ -218,10 +216,7 @@ MultiComplete.prototype = {
 
   replaceInPlace: function(str){
     var val = this.info.val;
-    if (typeof this.beforeReplace === "function") {
-      str = this.beforeReplace(str);
-    }
-    var newVal = val.slice(0, this.info.start) + this.info.activeMarker + str + val.slice(this.info.end, val.length - 1);
+    var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
     this.info.end = this.info.start + str.length + 1;
     this.$input.val(newVal);
     this.setCursorPosition(this.info.end);

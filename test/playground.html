@@ -30,7 +30,7 @@
     </div>
 
     <script src="jquery-2.2.0.min.js"></script>
-    <script src="../dist/multi-autocomplete.js"></script>
+    <script src="../dist/multicomplete.js"></script>
     <script src="testdata.js"></script>
     <script>
       'use strict';
@@ -81,7 +81,7 @@
         output: "#preview-container",
         datasets : datasets,
         fuzzyFilter : false,
-        beforeReplace: function(str, marker) {
+        beforeReplace: function(marker, str) {
           if (marker === ":") {
             return ":" + str + ":";
           }

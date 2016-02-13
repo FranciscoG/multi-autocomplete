@@ -13,10 +13,10 @@ function handleError(err) {
  var rename = require("gulp-rename");
   
  gulp.task('minify', function() {
-   return gulp.src('src/multi-autocomplete.js')
+   return gulp.src('src/multicomplete.js')
      .pipe(uglify())
      .on("error", handleError)
-     .pipe(rename("multi-autocomplete.min.js"))
+     .pipe(rename("multicomplete.min.js"))
      .pipe(gulp.dest('dist'));
  });
 
@@ -25,7 +25,7 @@ function handleError(err) {
  */
 
  gulp.task('move', function() {
-   return gulp.src('src/multi-autocomplete.js')
+   return gulp.src('src/multicomplete.js')
      .on("error", handleError)
      .pipe(gulp.dest('dist'));
  });

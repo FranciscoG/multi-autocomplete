@@ -47,6 +47,7 @@ function MultiComplete(options){
     this.warn("datasets missing");
     return;
   }
+
   var markers = "";
   for (var key in this.opts.datasets) {
     markers += key;
@@ -62,23 +63,24 @@ function MultiComplete(options){
   this.outputNode = this.$output.get(0);
 
   this.keycodes = {
-    up     : 38,
-    down   : 40,
-    left   : 37,
-    right  : 39,
-    enter  : 13,
-    esc    : 27,
-    tab    : 9,
-    shift  : 16,
+    up        : 38,
+    down      : 40,
+    left      : 37,
+    right     : 39,
+    enter     : 13,
+    esc       : 27,
+    tab       : 9,
+    shift     : 16,
     backspace : 8,
-    del    : 46,
-    space  : 32
+    del       : 46,
+    space     : 32
   };
 
   this.info = {};
   this._isPreviewing = false;
-  $('body').on('keyup', this.opts.input, $.proxy(this.onKeyUp, this));
   this.ignoreKey = false;
+
+  $('body').on('keyup', this.opts.input, $.proxy(this.onKeyUp, this));
   $('body').on('keydown keypress', this.opts.input, $.proxy(this.onKeyDown, this));
 }
 
@@ -96,6 +98,26 @@ MultiComplete.prototype = {
   getPrevSpace: function(str, end) {
     var returnIndex =  str.substring(0, end).lastIndexOf(' ');
     return returnIndex < 0 ? 0 : returnIndex + 1;
+  },
+
+  findPositions: function(val, cursorPos) {
+    var leftChar = val[cursorPos - 1];
+    
+    var startIndex;
+    var endIndex;
+
+    if (val[cursorPos] === " ") {
+      endIndex = cursorPos;
+    } else {
+      endIndex = this.getNextSpace(val, cursorPos);
+    }
+
+    if (leftChar === " ") {
+      startIndex = cursorPos;
+    } else {
+      startIndex = this.getPrevSpace(val, cursorPos);
+    }
+    return [startIndex, endIndex];
   },
 
   onKeyDown: function(e){
@@ -134,27 +156,12 @@ MultiComplete.prototype = {
 
     if (val) {
       var cursorPos = this.inputNode.selectionStart;
-      var leftChar = val[cursorPos - 1];
-      
-      var startIndex;
-      var endIndex;
+      var currentIndexes = this.findPositions(val, cursorPos);
+      var currentWord = val.substring(currentIndexes[0],currentIndexes[1]);
 
-      if (val[cursorPos] === " ") {
-        endIndex = cursorPos;
-      } else {
-        endIndex = this.getNextSpace(val, cursorPos);
-      }
-
-      if (leftChar === " ") {
-        startIndex = cursorPos;
-      } else {
-        startIndex = this.getPrevSpace(val, cursorPos);
-      }
-
-      var currentWord = val.substring(startIndex,endIndex);
       this.info = {
-        start: startIndex, 
-        end: endIndex,
+        start: currentIndexes[0], 
+        end: currentIndexes[1],
         fullStr: currentWord,
         filterStr : currentWord.substr(1),
         val: val
@@ -183,21 +190,22 @@ MultiComplete.prototype = {
   },
 
   beginFiltering: function(marker, filterStr){
-    if (!this.opts.datasets[marker]) { return; }
-    // we don't want to filter when we're still traversing the preview list
-    if (this._isPreviewing) { return; }
-
-    var self = this;
+    if (!this.opts.datasets[marker] || this._isPreviewing) {
+      return; 
+    }
     var dataToFilter = this.opts.datasets[marker];
-    var filteredData = $.grep(dataToFilter, function(el){
-      if (self.opts.fuzzyFilter) {
+    var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
+    this.addToPreview(filteredData);
+  },
+
+  getFilteredData: function(filterStr, fuzzyFilter, fullArray) {
+    return $.grep(fullArray, function(el){
+      if (fuzzyFilter) {
         return el.indexOf(filterStr) >= 0;
       } else {
         return el.indexOf(filterStr) === 0;
       }
     });
-
-    this.addToPreview(filteredData);
   },
 
   addToPreview: function(filteredData) {
@@ -270,7 +278,7 @@ MultiComplete.prototype = {
   replaceInPlace: function(str){
     var val = this.info.val;
     if (typeof this.opts.beforeReplace === 'function') {
-      str = this.opts.beforeReplace(str, this.info.activeMarker);
+      str = this.opts.beforeReplace(this.info.activeMarker, str);
     }
     var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
     this.info.end = this.info.start + str.length + 1;

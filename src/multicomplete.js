@@ -62,7 +62,7 @@ function MultiComplete(options){
   this.inputNode = this.$input.get(0);
   this.outputNode = this.$output.get(0);
 
-  this.keycodes = {
+  this.keys = {
     up        : 38,
     down      : 40,
     left      : 37,
@@ -80,14 +80,14 @@ function MultiComplete(options){
   this._isPreviewing = false;
   this.ignoreKey = false;
 
-  $('body').on('keyup', this.opts.input, $.proxy(this.onKeyUp, this));
-  $('body').on('keydown keypress', this.opts.input, $.proxy(this.onKeyDown, this));
+  $(this.opts.input).on('keyup', $.proxy(this.onKeyUp, this));
+  $(this.opts.input).on('keydown', $.proxy(this.onKeyDown, this));
 }
 
 MultiComplete.prototype = {
   
   warn: function(stuff){
-    if (console && console.warn) { console.warn("mutli-autocomplete:",stuff) ;}
+    if (console && console.warn) { console.warn("mutlicomplete:",stuff) ;}
   },
 
   getNextSpace: function(str, start) {
@@ -120,34 +120,44 @@ MultiComplete.prototype = {
     return [startIndex, endIndex];
   },
 
-  onKeyDown: function(e){
+  stopKeys: function(e){
     var self = this;
+    this.ignoreKey = true;
+    e.preventDefault();
+    setTimeout(function(){self.ignoreKey=false;},1);
+  },
+
+  onKeyDown: function(e){
     var elem = this.inputNode;
     var pos;
 
     if (this.ignoreKey) {
+      // e.stopImmediatePropagation();
       e.preventDefault();
       return false;
     }
 
-    if (e.keyCode === this.keycodes.up || e.keyCode === this.keycodes.down) {
+    if (e.keyCode === this.keys.up || e.keyCode === this.keys.down) {
         pos = this.info.end;
         this.setCursorPosition(pos);
-        this.ignoreKey = true;
-        setTimeout(function(){self.ignoreKey=false;},1);
-        e.preventDefault();
+        this.stopKeys(e);
     }
 
-    if (e.keyCode === this.keycodes.right && this._isPreviewing) {
+    if (e.keyCode === this.keys.right && this._isPreviewing) {
       pos = this.info.end;
       if (pos >= this.info.val.length - 1) {
         this.$input.val(this.$input.val() + ' ');
       }
       this.setCursorPosition(pos + 1);
-      this.ignoreKey = true;
-      setTimeout(function(){self.ignoreKey=false;},1);
-      e.preventDefault();
+      this.stopKeys(e);
     }
+
+    // if (this._isPreviewing && e.keyCode === this.keys.enter) {
+    //   // this.stopKeys();
+    //   e.preventDefault();
+    //   e.stopImmediatePropagation();
+    //   console.log("test");
+    // }
 
   },
 
@@ -186,6 +196,7 @@ MultiComplete.prototype = {
 
   clearPreview: function() {
     this.$output.empty();
+    this.$output.hide();
     this._isPreviewing = false;
   },
 
@@ -195,7 +206,11 @@ MultiComplete.prototype = {
     }
     var dataToFilter = this.opts.datasets[marker];
     var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
-    this.addToPreview(filteredData);
+    if (filteredData.length > 0) {
+      this.addToPreview(filteredData);
+    } else {
+      this.clearPreview();
+    }
   },
 
   getFilteredData: function(filterStr, fuzzyFilter, fullArray) {
@@ -210,6 +225,7 @@ MultiComplete.prototype = {
 
   addToPreview: function(filteredData) {
     this.clearPreview();
+    this._isPreviewing = true;
     var self = this;
 
     var tmpFrag = document.createDocumentFragment();
@@ -225,22 +241,19 @@ MultiComplete.prototype = {
       if (i === 0) { item.classList.add(self.opts.activeClass); }
       tmpFrag.appendChild(item);
     });
-    this.$output.append(tmpFrag);
+    this.$output.append(tmpFrag).slideDown(200);
   },
 
   navPreview: function(keyCode) {
     var modifier;
-    if (keyCode === this.keycodes.up) {
+    if (keyCode === this.keys.up) {
       modifier = -1;
       this._isPreviewing = true;
-      this.$output.focus();
-    } else if (keyCode === this.keycodes.down) {
+    } else if (keyCode === this.keys.down) {
       modifier = 1;
       this._isPreviewing = true;
-      this.$output.focus();
     } else {
       this._isPreviewing = false;
-      this.$input.focus();
       return; // do nothing if up/down not pressed
     }
 

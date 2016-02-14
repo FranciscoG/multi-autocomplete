@@ -98,6 +98,8 @@ ul {
   overflow: hidden;
   padding: 10px;
   width: 80%;
+  display: none;
+  background-color: #888;
 }
 
 #preview-container li.active {

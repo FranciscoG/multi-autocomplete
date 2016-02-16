@@ -76,12 +76,14 @@ function MultiComplete(options){
     space     : 32
   };
 
-  this.info = {};
+  this.info = {
+    filteredDataLength: 0
+  };
   this._isPreviewing = false;
   this.ignoreKey = false;
 
-  $(this.opts.input).on('keyup', $.proxy(this.onKeyUp, this));
-  $(this.opts.input).on('keydown', $.proxy(this.onKeyDown, this));
+  this.$input.on('keyup', $.proxy(this.onKeyUp, this));
+  this.$input.on('keydown', $.proxy(this.onKeyDown, this));
 }
 
 MultiComplete.prototype = {
@@ -124,6 +126,7 @@ MultiComplete.prototype = {
     var self = this;
     this.ignoreKey = true;
     e.preventDefault();
+    e.stopImmediatePropagation();
     setTimeout(function(){self.ignoreKey=false;},1);
   },
 
@@ -132,7 +135,7 @@ MultiComplete.prototype = {
     var pos;
 
     if (this.ignoreKey) {
-      // e.stopImmediatePropagation();
+      e.stopImmediatePropagation();
       e.preventDefault();
       return false;
     }
@@ -152,12 +155,10 @@ MultiComplete.prototype = {
       this.stopKeys(e);
     }
 
-    // if (this._isPreviewing && e.keyCode === this.keys.enter) {
-    //   // this.stopKeys();
-    //   e.preventDefault();
-    //   e.stopImmediatePropagation();
-    //   console.log("test");
-    // }
+    if (this._isPreviewing && e.keyCode === this.keys.enter) {
+      this.stopKeys(e);
+      console.log("test");
+    }
 
   },
 
@@ -206,6 +207,7 @@ MultiComplete.prototype = {
     }
     var dataToFilter = this.opts.datasets[marker];
     var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
+    this.info.filteredDataLength = filteredData.length;
     if (filteredData.length > 0) {
       this.addToPreview(filteredData);
     } else {

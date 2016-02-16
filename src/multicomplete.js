@@ -11,6 +11,9 @@ function MultiComplete(options){
    * @type {Object}
    */
   var defaults = {
+    output: null, // will be required 
+    input: null, // will be required 
+    datasets: null, // will be required 
     outputDom : "li",
     activeClass : "active",
     fuzzyFilter : true,
@@ -24,7 +27,7 @@ function MultiComplete(options){
    * override internal defaults
    * @type {Object}
    */
-  this.opts = $.extend(defaults, options);
+  this.opts = $.extend(true, {}, defaults, options);
 
   /**
    * Caching jQuery selectors and checking for 
@@ -33,13 +36,13 @@ function MultiComplete(options){
   
   this.$input = $(this.opts.input);
   if (!this.opts.input || !this.$input.length) {
-    this.warn("input not set or doesn't exist");
+    this.warn("input option not provided or element is missing");
     return;
   }
   
   this.$output = $(this.opts.output);
   if (!this.opts.output || !this.$output.length) {
-    this.warn("preview container not set or doesn't exist");
+    this.warn("preview container not provided or element is missing");
     return;
   }
   
@@ -70,20 +73,28 @@ function MultiComplete(options){
     enter     : 13,
     esc       : 27,
     tab       : 9,
-    shift     : 16,
+    shiftKey  : 16,
     backspace : 8,
     del       : 46,
-    space     : 32
+    space     : 32,
+    ctrl      : 17,
+  };
+
+  this.modKeys = {
+    ctrlDown : false,
+    shiftDown : false
   };
 
   this.info = {
     filteredDataLength: 0
   };
   this._isPreviewing = false;
-  this.ignoreKey = false;
 
   this.$input.on('keyup', $.proxy(this.onKeyUp, this));
   this.$input.on('keydown', $.proxy(this.onKeyDown, this));
+  $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+  $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
+  this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
 }
 
 MultiComplete.prototype = {
@@ -92,9 +103,26 @@ MultiComplete.prototype = {
     if (console && console.warn) { console.warn("mutlicomplete:",stuff) ;}
   },
 
+  modifierKeysDown: function(e) {
+    if (e.keyCode === this.keys.ctrl) {
+      this.modKeys.ctrlDown = true;
+    }
+    if (e.keyCode === this.keys.shiftKey) {
+      this.modKeys.shiftKey = true;
+    }
+  },
+  modifierKeysUp : function (e) {
+    if (e.keyCode === this.keys.ctrl) {
+      this.modKeys.ctrlDown = false;
+    }
+    if (e.keyCode === this.keys.shiftKey) {
+      this.modKeys.shiftKey = false;
+    }
+  },
+
   getNextSpace: function(str, start) {
     var returnIndex = str.substring(start, str.length).indexOf(' ');
-    return returnIndex < 0 ? str.length : returnIndex;
+    return (returnIndex < 0)? str.length : returnIndex + start;
   },
 
   getPrevSpace: function(str, end) {
@@ -103,8 +131,6 @@ MultiComplete.prototype = {
   },
 
   findPositions: function(val, cursorPos) {
-    var leftChar = val[cursorPos - 1];
-    
     var startIndex;
     var endIndex;
 
@@ -114,6 +140,7 @@ MultiComplete.prototype = {
       endIndex = this.getNextSpace(val, cursorPos);
     }
 
+    var leftChar = val[cursorPos - 1];
     if (leftChar === " ") {
       startIndex = cursorPos;
     } else {
@@ -122,48 +149,61 @@ MultiComplete.prototype = {
     return [startIndex, endIndex];
   },
 
-  stopKeys: function(e){
-    var self = this;
-    this.ignoreKey = true;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    setTimeout(function(){self.ignoreKey=false;},1);
-  },
-
   onKeyDown: function(e){
-    var elem = this.inputNode;
     var pos;
 
-    if (this.ignoreKey) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      return false;
-    }
+    switch (e.keyCode) {
+      case this.keys.up:
+        if (this._isPreviewing) {
+          this.navPreview(-1);
+          e.preventDefault();
+          return false;
+        }
+        break;
+      case this.keys.down:
+        if (this._isPreviewing) {
+          this.navPreview(1);
+          e.preventDefault();
+          return false;
+        }
+        break;
+      case this.keys.right:
+        if (this.modKeys.ctrlDown || this.modKeys.shiftDown || e.shiftKey || e.ctrlKey) {
+            return true;
+        }
+        if (this._isPreviewing) {
+          this.useActiveText();
+          this.clearPreview();
+          e.preventDefault();
+          return false;
+        }
+        break;
+      case this.keys.enter:
+        if (this._isPreviewing) {
+          this.useActiveText();
+          this.clearPreview();
 
-    if (e.keyCode === this.keys.up || e.keyCode === this.keys.down) {
-        pos = this.info.end;
-        this.setCursorPosition(pos);
-        this.stopKeys(e);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+        break;
+      default:
+        this._isPreviewing = false;
+        return true;
     }
-
-    if (e.keyCode === this.keys.right && this._isPreviewing) {
-      pos = this.info.end;
-      if (pos >= this.info.val.length - 1) {
-        this.$input.val(this.$input.val() + ' ');
-      }
-      this.setCursorPosition(pos + 1);
-      this.stopKeys(e);
-    }
-
-    if (this._isPreviewing && e.keyCode === this.keys.enter) {
-      this.stopKeys(e);
-      console.log("test");
-    }
-
+    this._isPreviewing = false;
+    return true;
   },
 
   onKeyUp : function(evt) {
     var val = this.inputNode.value;
+    
+    if (evt.keyCode === this.keys.enter) {
+      console.log(evt);
+      evt.stopImmediatePropagation();
+      evt.preventDefault();
+    }
 
     if (val) {
       var cursorPos = this.inputNode.selectionStart;
@@ -173,16 +213,17 @@ MultiComplete.prototype = {
       this.info = {
         start: currentIndexes[0], 
         end: currentIndexes[1],
+        cursorPos: cursorPos,
         fullStr: currentWord,
         filterStr : currentWord.substr(1),
         val: val
       };
+      // console.log(this.info);
 
       var firstCharOfWord = currentWord.charAt(0);
       if (this.markersRegex.test(firstCharOfWord)) {
         this.info.activeMarker = firstCharOfWord;
         this.beginFiltering(firstCharOfWord, currentWord.substr(1));
-        this.navPreview(evt.keyCode);
       } else {
         this.clearPreview();
       }
@@ -243,34 +284,30 @@ MultiComplete.prototype = {
       if (i === 0) { item.classList.add(self.opts.activeClass); }
       tmpFrag.appendChild(item);
     });
-    this.$output.append(tmpFrag).slideDown(200);
-  },
 
-  navPreview: function(keyCode) {
-    var modifier;
-    if (keyCode === this.keys.up) {
-      modifier = -1;
-      this._isPreviewing = true;
-    } else if (keyCode === this.keys.down) {
-      modifier = 1;
-      this._isPreviewing = true;
-    } else {
-      this._isPreviewing = false;
-      return; // do nothing if up/down not pressed
+    if (this.info.filteredDataLength > 0) {
+      this.$output.append(tmpFrag).slideDown(200);
     }
 
-    var $collection = this.$output.children();
-    var activeIndex = this.$output.find('.' + this.opts.activeClass).index();
-    var newItem = activeIndex + modifier;
+    this.$collection = this.$output.children();
+  },
 
-    var childLen = $collection.length;
+  navPreview: function(incrementBy) {
+    var activeIndex = this.$output.find('.' + this.opts.activeClass).index();
+    var newItem = activeIndex + incrementBy;
+
+    var childLen = this.$collection.length;
     if (newItem < 0) {
       newItem = childLen - 1;
     } else if (newItem > childLen - 1) {
       newItem = 0;
     }
 
-    $collection.removeClass(this.opts.activeClass).eq(newItem).addClass(this.opts.activeClass);
+    this.$collection.removeClass(this.opts.activeClass).eq(newItem).addClass(this.opts.activeClass);
+    this.useActiveText();
+  },
+
+  useActiveText: function(){
     var $newActive = this.$output.find('.' + this.opts.activeClass);
     this.scrollOutput($newActive);
 
@@ -280,8 +317,20 @@ MultiComplete.prototype = {
     } else {
       newText = $newActive.text();
     }
-  
+    
     this.replaceInPlace(newText);
+  },
+
+  onClickPick: function(e){
+    var newText;
+    if (typeof this.opts.getActiveText === "function") {
+      newText = this.opts.getActiveText($(e.target));
+    } else {
+      newText = $(e.target).text();
+    }
+    
+    this.replaceInPlace(newText);
+    this.clearPreview();
   },
 
   scrollOutput: function($elem){

@@ -64,6 +64,7 @@ function MultiComplete(options){
    */
   this.inputNode = this.$input.get(0);
   this.outputNode = this.$output.get(0);
+  this.outputNode.tabIndex = 0;
 
   this.keys = {
     up        : 38,
@@ -88,13 +89,18 @@ function MultiComplete(options){
   this.info = {
     filteredDataLength: 0
   };
-  this._isPreviewing = false;
+  
+  this.states = {
+    isPreviewing : false,
+    inputHasFocus: false
+  };
 
-  this.$input.on('keyup', $.proxy(this.onKeyUp, this));
-  this.$input.on('keydown', $.proxy(this.onKeyDown, this));
+  this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+  this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
   $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
   $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
   this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
+  this.$output.on('keyup', $.proxy(this.outputKeyup, this));
 }
 
 MultiComplete.prototype = {
@@ -149,19 +155,28 @@ MultiComplete.prototype = {
     return [startIndex, endIndex];
   },
 
-  onKeyDown: function(e){
-    var pos;
+  outputKeyup: function(e){
+    this.states.inputHasFocus = false;
+  },
 
+  onInputKeydown: function(e){
+    var pos;
+    this.states.inputHasFocus = true;
+
+    return this.handleKeys(e);
+  },
+
+  handleKeys: function(e) {
     switch (e.keyCode) {
       case this.keys.up:
-        if (this._isPreviewing) {
+        if (this.states.isPreviewing) {
           this.navPreview(-1);
           e.preventDefault();
           return false;
         }
         break;
       case this.keys.down:
-        if (this._isPreviewing) {
+        if (this.states.isPreviewing) {
           this.navPreview(1);
           e.preventDefault();
           return false;
@@ -171,7 +186,7 @@ MultiComplete.prototype = {
         if (this.modKeys.ctrlDown || this.modKeys.shiftDown || e.shiftKey || e.ctrlKey) {
             return true;
         }
-        if (this._isPreviewing) {
+        if (this.states.isPreviewing) {
           this.useActiveText();
           this.clearPreview();
           e.preventDefault();
@@ -179,7 +194,16 @@ MultiComplete.prototype = {
         }
         break;
       case this.keys.enter:
-        if (this._isPreviewing) {
+        if (this.states.isPreviewing) {
+          this.useActiveText();
+          this.clearPreview();
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+        break;
+      case this.keys.tab:
+        if (this.states.isPreviewing) {
           this.useActiveText();
           this.clearPreview();
 
@@ -187,24 +211,17 @@ MultiComplete.prototype = {
           e.stopImmediatePropagation();
           return false;
         }
-        break;
       default:
-        this._isPreviewing = false;
+        this.states.isPreviewing = false;
         return true;
     }
-    this._isPreviewing = false;
     return true;
   },
 
-  onKeyUp : function(evt) {
+  onInputKeyup : function(evt) {
     var val = this.inputNode.value;
+    this.states.inputHasFocus = true;
     
-    if (evt.keyCode === this.keys.enter) {
-      console.log(evt);
-      evt.stopImmediatePropagation();
-      evt.preventDefault();
-    }
-
     if (val) {
       var cursorPos = this.inputNode.selectionStart;
       var currentIndexes = this.findPositions(val, cursorPos);
@@ -218,7 +235,7 @@ MultiComplete.prototype = {
         filterStr : currentWord.substr(1),
         val: val
       };
-      // console.log(this.info);
+      console.log(this.info);
 
       var firstCharOfWord = currentWord.charAt(0);
       if (this.markersRegex.test(firstCharOfWord)) {
@@ -239,16 +256,18 @@ MultiComplete.prototype = {
   clearPreview: function() {
     this.$output.empty();
     this.$output.hide();
-    this._isPreviewing = false;
+    this.states.isPreviewing = false;
   },
 
   beginFiltering: function(marker, filterStr){
-    if (!this.opts.datasets[marker] || this._isPreviewing) {
+    if (!this.opts.datasets[marker] || this.states.isPreviewing) {
       return; 
     }
+
     var dataToFilter = this.opts.datasets[marker];
     var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
     this.info.filteredDataLength = filteredData.length;
+
     if (filteredData.length > 0) {
       this.addToPreview(filteredData);
     } else {
@@ -268,7 +287,7 @@ MultiComplete.prototype = {
 
   addToPreview: function(filteredData) {
     this.clearPreview();
-    this._isPreviewing = true;
+    this.states.isPreviewing = true;
     var self = this;
 
     var tmpFrag = document.createDocumentFragment();
@@ -282,13 +301,12 @@ MultiComplete.prototype = {
       }
       
       if (i === 0) { item.classList.add(self.opts.activeClass); }
+
+      item.tabIndex = 0;
       tmpFrag.appendChild(item);
     });
 
-    if (this.info.filteredDataLength > 0) {
-      this.$output.append(tmpFrag).slideDown(200);
-    }
-
+    this.$output.append(tmpFrag).slideDown(200);
     this.$collection = this.$output.children();
   },
 
@@ -307,17 +325,23 @@ MultiComplete.prototype = {
     this.useActiveText();
   },
 
-  useActiveText: function(){
+  // probably should rename this to differ from the option
+  getActiveText: function(andScroll){
     var $newActive = this.$output.find('.' + this.opts.activeClass);
-    this.scrollOutput($newActive);
-
+    if (andScroll) {
+      this.scrollOutput($newActive);
+    }
     var newText;
     if (typeof this.opts.getActiveText === "function") {
       newText = this.opts.getActiveText($newActive);
     } else {
       newText = $newActive.text();
     }
-    
+    return newText;
+  },
+
+  useActiveText: function(){
+    var newText = this.getActiveText(true);
     this.replaceInPlace(newText);
   },
 
@@ -363,6 +387,7 @@ MultiComplete.prototype = {
             elem.setSelectionRange(pos, pos);
         }
     }
+    this.states.inputHasFocus = true;
   }
 };
 

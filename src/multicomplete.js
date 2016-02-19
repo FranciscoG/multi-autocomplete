@@ -157,6 +157,7 @@ MultiComplete.prototype = {
 
   outputKeyup: function(e){
     this.states.inputHasFocus = false;
+    return this.handleKeys(e);
   },
 
   onInputKeydown: function(e){
@@ -212,10 +213,19 @@ MultiComplete.prototype = {
           return false;
         }
       default:
-        this.states.isPreviewing = false;
         return true;
     }
     return true;
+  },
+
+  focusOnOutput: function(){
+    this.states.inputHasFocus = false;
+    this.outputNode.focus();
+  },
+
+  focusBackOnInput: function() {
+    this.states.inputHasFocus = true;
+    this.inputNode.focus();
   },
 
   onInputKeyup : function(evt) {

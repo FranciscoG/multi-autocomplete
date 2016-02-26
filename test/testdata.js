@@ -6,7 +6,11 @@ var datasets = {
     'catbird',
     'lizardface',
     'superfrog',
-    'wacky'
+    'wacky',
+    'larry',
+    'moe',
+    'curly',
+    'etc'
   ],
   ":" : [
     'cat',

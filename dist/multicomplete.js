@@ -97,8 +97,10 @@ function MultiComplete(options){
 
   this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
   this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
-  $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+
   $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
+  $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+
   this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
   this.$output.on('keyup', $.proxy(this.outputKeyup, this));
 }
@@ -161,9 +163,7 @@ MultiComplete.prototype = {
   },
 
   onInputKeydown: function(e){
-    var pos;
     this.states.inputHasFocus = true;
-
     return this.handleKeys(e);
   },
 
@@ -213,19 +213,10 @@ MultiComplete.prototype = {
           return false;
         }
       default:
+        this.states.isPreviewing = false;
         return true;
     }
     return true;
-  },
-
-  focusOnOutput: function(){
-    this.states.inputHasFocus = false;
-    this.outputNode.focus();
-  },
-
-  focusBackOnInput: function() {
-    this.states.inputHasFocus = true;
-    this.inputNode.focus();
   },
 
   onInputKeyup : function(evt) {
@@ -245,7 +236,7 @@ MultiComplete.prototype = {
         filterStr : currentWord.substr(1),
         val: val
       };
-      console.log(this.info);
+      // console.log(this.info);
 
       var firstCharOfWord = currentWord.charAt(0);
       if (this.markersRegex.test(firstCharOfWord)) {
@@ -287,7 +278,7 @@ MultiComplete.prototype = {
 
   getFilteredData: function(filterStr, fuzzyFilter, fullArray) {
     return $.grep(fullArray, function(el){
-      if (fuzzyFilter) {
+      if (fuzzyFilter === true) {
         return el.indexOf(filterStr) >= 0;
       } else {
         return el.indexOf(filterStr) === 0;

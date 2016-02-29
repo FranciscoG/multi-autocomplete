@@ -37,11 +37,10 @@ gulp.task('concat', function() {
  * Run jasmine test
  */
  
- var jasmine = require('gulp-jasmine');
- gulp.task('test', function () {
+gulp.task('test', function () {
+  var mocha = require('gulp-jasmine');
   return gulp.src('test/spec/test.js')
-    // gulp-jasmine works on filepaths so you can't have any plugins before it 
-    .pipe(jasmine());
+    .pipe(jasmine())
 });
 
 

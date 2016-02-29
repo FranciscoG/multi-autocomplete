@@ -1,25 +1,34 @@
 // TODO: Figure all this testing stuff out
+var mocha = require('mocha');
+var jsdom = require('mocha-jsdom')
+var chai = require('chai');
+var should = chai.should;
+var expect = chai.expect;
 
-var mc_autpo = require('../../dist/multicomplete.js');
+var MultiComplete = require('../../src/multicomplete.js');
 var datasets = require('../testdata.js');
-var $ = require('../jquery-2.2.0.min.js');
 
-var inputElem = document.createElement('input');
-inputElem.type = text;
-inputElem.id = "chatInput";
-
-var outputElem = document.createElement('ul');
-outputElem.id = "preview-container";
-
-var mc = new MultiComplete({
-  input: "#chatInput",
-  output: "#preview-container",
-  datasets : datasets,
-  fuzzyFilter : false
-});
 
 describe("A suite", function() {
-  it("contains spec with an expectation", function() {
-    expect(mc.getNextSpace(0, "happy")).toBe(4);
+
+  var $;
+  jsdom();
+
+  before(function () {
+    $ = require('jquery')
+    $('body').append('<input type="text" id="chatInput" />');
   });
+
+  it("test suite should work dammit", function() {
+    
+    var mc = new MultiComplete({
+      input: "#chatInput",
+      fuzzyFilter : false,
+      datasets : datasets
+    });
+
+    var x = mc.getNextSpace(0, "happy")
+    x.should.equal(4);
+  });
+
 });

@@ -26,8 +26,17 @@
   "devDependencies": {
     "gulp": "^3.9.0",
     "gulp-concat": "^2.6.0",
-    "gulp-jasmine": "^2.2.1",
     "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^1.5.1"
+    "gulp-uglify": "^1.5.1",
+    "jquery": "^2.2.1",
+    "gulp-jasmine" : "latest",
+    "gulp-karma": "0.0.4",
+    "jasmine-core": "^2.3.4",
+    "jasmine-jquery": "^2.1.0",
+    "karma": "^0.13.9",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-jasmine": "^0.3.6",
+    "karma-jasmine-html-reporter": "^0.1.8",
+    "karma-jasmine-jquery": "^0.1.1"
   }
 }

@@ -37,10 +37,14 @@ gulp.task('concat', function() {
  * Run jasmine test
  */
  
-gulp.task('test', function () {
-  var mocha = require('gulp-jasmine');
-  return gulp.src('test/spec/test.js')
-    .pipe(jasmine())
+gulp.task('test', function (done) {
+  var karma = require('karma').server;
+  var jasmine = require('gulp-jasmine');
+
+  return karma.start({
+    configFile: __dirname + '/karma.conf.js',
+    singleRun: false
+  }, done);
 });
 
 

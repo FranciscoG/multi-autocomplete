@@ -445,6 +445,7 @@
       var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
       this.info.filteredDataLength = filteredData.length;
 
+      this.info.filteredData = filteredData;
       this.sendToPreview(filteredData);
     },
 

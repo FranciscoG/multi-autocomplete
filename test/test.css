@@ -25,13 +25,14 @@ body {
 }
 
 .container {
-  width: 1000px;
+  width: 100%;
   padding: 10px;
   margin: 0 auto;
 }
 
 .chat-area {
-  width: 60%;
+  width: 40%;
+  min-width: 400px;
   float: left;
   margin: 50px auto;
   background-color: #605C5C;
@@ -71,15 +72,17 @@ ul {
 
 .example-data {
   float:left;
-  width: 40%;
+  width: 60%;
+  min-width: 400px;
   padding: 50px 20px 20px;
 }
 .example-data ul {
-  width: 50%;
+  width: 31%;
   float:left;
   height: 100%;
   list-style-type: none;
   color: #fff;
+  margin: 0 5px 0 0;
 }
 .data-title {
   border-bottom: 1px solid #fff;

@@ -41,6 +41,20 @@ var datasets = {
     'broken_heart',
     'thumbsup',
     'thumbsdown'
+  ],
+  "/" : [
+    "sayhi",
+    "destroy",
+    "ban", 
+    "challenge",
+    "emote",
+    "ignore",
+    "message",
+    "away",
+    "hola",
+    "afuera",
+    "lejos",
+    "quien"
   ]
 };
 

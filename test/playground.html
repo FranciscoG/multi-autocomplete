@@ -18,13 +18,7 @@
         <p>Press enter to submit chat</p>
       </div>
 
-      <div class="example-data cf">
-        <ul id="emojis">
-          <li class="data-title">:emojis:</li>
-        </ul>
-        <ul id="mentions">
-          <li class="data-title">@mentions</li>
-        </ul>
+      <div id="datas" class="example-data cf">
       </div>
 
     </div>
@@ -35,7 +29,10 @@
     <script>
       'use strict';
       
-      /* playground setup */
+      /****************************************************
+       * Set up the chat box to accept messages from the input
+       * and add them to the chat on input.  
+       */
       var chatOutput = document.getElementById('chatOutput');
       var createChatMessage = function(str){
         var li = document.createElement('li');
@@ -43,6 +40,11 @@
         chatOutput.appendChild(li);
       };
 
+      /* 
+        I need this library to work nicely with inputs that already
+        have event listeners on then so I'm mocking up a chat box
+        and adding a keyup event
+      */
       $('#chatInput').on('keyup', function (e) {
         e.preventDefault();
         // console.log(e.keyCode);
@@ -52,23 +54,39 @@
         }
       });
 
-      function makeLlist(arr, target) {
-        var tmp = document.createDocumentFragment();
+      /*****************************************************/
+      /*
+        Setup the list on the right
+       */
+      function makeLlist(arr, target, realName) {
+        var ul = document.createElement('ul');
+        ul.id = target;
+
+        var firstLi = document.createElement("li");
+        firstLi.className = "data-title";
+        firstLi.textContent = realName;
+        
+        ul.appendChild(firstLi);
         arr.forEach(function(el,i,r){
           var li = document.createElement("li");
           li.textContent = el;
-          tmp.appendChild(li);
+          ul.appendChild(li);
         });
-        document.getElementById(target).appendChild(tmp);
+
+        document.getElementById("datas").appendChild(ul);
       }
       /* global datasets, MultiComplete */
       for (var key in datasets) {
         if (key === "@") {
-           makeLlist(datasets["@"], "mentions");
+           makeLlist(datasets["@"], "mentions", "@mentions");
         }
 
         if (key === ":") {
-          makeLlist(datasets[":"], "emojis");
+          makeLlist(datasets[":"], "emojis", ":emojis:");
+        }
+
+        if (key === "/") {
+          makeLlist(datasets["/"], "commands", "/commands");
         }
       }
 

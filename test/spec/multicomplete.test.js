@@ -1,3 +1,4 @@
+/* global describe, expect, it, MultiComplete, datasets, beforeEach, afterEach */
 describe("Multicomplete suite", function() {
 
   var  mc;
@@ -15,7 +16,32 @@ describe("Multicomplete suite", function() {
     });
 
     afterEach(function(){
-      mc.opts.fuzzyFilter = false;
+      mc = null;
+    });
+
+    it('Should throw an error when input option is not given', function(){
+        expect( function(){ mc = new MultiComplete({datasets : datasets}); } ).toThrow(new Error("input option not provided or element is missing"));
+    });
+
+    it('Should throw an error when input given but DOM elemenet does not exist', function(){
+        expect( function(){ mc = new MultiComplete({input: "#nullInput", datasets : datasets}); } ).toThrow(new Error("input option not provided or element is missing"));
+    });
+
+    it('Should throw an error when no datasets provided', function(){
+        expect( function(){ mc = new MultiComplete({input: "#chatInput"}); } ).toThrow(new Error("no datasets provided or error loading them"));
+    });
+
+    it('Should make regex from the markers in the datasets', function(){
+        expect(mc.markersRegex).toEqual(/[@:\/]/i);
+    });
+
+    it('Should properly escape regex characters', function(){
+      expect(mc.makeRegex("@:/")).toEqual(/[@:\/]/i);
+      expect(mc.makeRegex("@(:/")).toEqual(/[@\(:\/]/i);
+      expect(mc.makeRegex("):/")).toEqual(/[\):\/]/i);
+      expect(mc.makeRegex("*+$")).toEqual(/[\*\+\$]/i);
+      expect(mc.makeRegex("X?{=")).toEqual(/[X\?\{=]/i);
+      expect(mc.makeRegex("@^\\")).toEqual(/[@\^\\]/i);
     });
 
     it('Should return the correct next space given a string and starting index', function() {

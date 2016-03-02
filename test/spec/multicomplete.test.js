@@ -14,6 +14,10 @@ describe("Multicomplete suite", function() {
         });
     });
 
+    afterEach(function(){
+      mc.opts.fuzzyFilter = false;
+    });
+
     it('Should return the correct next space given a string and starting index', function() {
       expect(mc.getNextSpace('string', 0)).toEqual(6);
       expect(mc.getNextSpace('', 0)).toEqual(0);
@@ -36,6 +40,20 @@ describe("Multicomplete suite", function() {
       $('#chatInput').val(':cat');
       $('#chatInput').trigger('keyup');
       expect(mc.info.filteredData).toEqual(['cat']);
+    });
+
+    it('Should extract the a word when a marker is detected', function(){
+      $('#chatInput').val('hello I am a @mountain goat');
+      document.getElementById('chatInput').setSelectionRange(16, 16);
+      $('#chatInput').trigger('keyup');
+      expect(mc.info.fullStr).toEqual('@mountain');
+    });
+
+    it('Should fuzzy filter data properly', function(){
+      mc.opts.fuzzyFilter = true;
+      $('#chatInput').val(':m');
+      $('#chatInput').trigger('keyup');
+      expect(mc.info.filteredData).toEqual(["smiley", "open_mouth", "smile", "unamused", "mask", "thumbsup", "thumbsdown"]);
     });
 
 });

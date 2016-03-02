@@ -12,7 +12,7 @@
      * Default options
      * @type {Object}
      */
-    var defaults = {
+    this.defaults = {
       input: null, // will be required 
       fuzzyFilter : true
     };
@@ -22,47 +22,55 @@
      * override internal defaults
      * @type {Object}
      */
-    this.opts = $.extend(true, {}, defaults, options);
+    this.opts = $.extend(true, {}, this.defaults, options);
 
-    /**
-     * Caching jQuery selectors and checking for 
-     * required options
-     */
-    
-    this.$input = $(this.opts.input);
-    if (!this.opts.input || !this.$input.length) {
-      this.warn("input option not provided or element is missing");
-      return;
-    }
-    
-    
-    if (!this.opts.datasets) {
-      this.warn("datasets missing");
-      return;
-    }
-
-    var markers = "";
-    for (var key in this.opts.datasets) {
-      markers += key;
-    }
-    this.markersRegex = new RegExp("["+markers+"]", "i");
-
-    /**
-     * Caching important DOM nodes when we need to use
-     * straight up Javascript instead of jQuery
-     * @type {[type]}
-     */
-    this.inputNode = this.$input.get(0);
-
-    this.info = {
-      filteredDataLength: 0
-    };
-    
-    this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+    this.init();
   }
 
   MultiComplete.prototype = {
     
+    init: function() {
+      /**
+       * Caching jQuery selectors and checking for 
+       * required options
+       */
+      
+      this.$input = $(this.opts.input);
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        return;
+      }
+      
+      
+      if (!this.opts.datasets) {
+        this.warn("datasets missing");
+        return;
+      }
+
+      /**
+       * Create a regex from the markers for the dataset
+       * to indicate when to start filtering data
+       */
+      var markers = "";
+      for (var key in this.opts.datasets) {
+        markers += key;
+      }
+      this.markersRegex = new RegExp("["+markers+"]", "i");
+
+      /**
+       * Caching important DOM nodes when we need to use
+       * straight up Javascript instead of jQuery
+       * @type {[type]}
+       */
+      this.inputNode = this.$input.get(0);
+
+      this.info = {
+        filteredDataLength: 0
+      };
+      
+      this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+    },
+
     warn: function(stuff){
       if (console && console.warn) { console.warn("mutlicomplete:",stuff) ;}
     },
@@ -112,15 +120,15 @@
           filterStr : currentWord.substr(1),
           val: val
         };
-        // console.log(this.info);
 
         var firstCharOfWord = currentWord.charAt(0);
         if (this.markersRegex.test(firstCharOfWord)) {
           this.info.activeMarker = firstCharOfWord;
           this.beginFiltering(firstCharOfWord, currentWord.substr(1));
-        } else {
-          this.clearPreview();
-        }
+        } 
+        // else {
+        //   this.clearPreview();
+        // }
 
         return;
       }

@@ -35,17 +35,8 @@ gulp.task('concat', function() {
 
 /**********************************************
  * Run jasmine test
+ * use `npm test` instsead
  */
- 
-gulp.task('test', function (done) {
-  var karma = require('karma').server;
-  var jasmine = require('gulp-jasmine');
-
-  return karma.start({
-    configFile: __dirname + '/karma.conf.js',
-    singleRun: false
-  }, done);
-});
 
 
 /**********************************************

@@ -4,14 +4,41 @@ describe("Multicomplete suite", function() {
   var  mc;
 
     beforeEach(function(){
-      var fixture = '<input id="chatInput" type="text" />';
+      var fixture = '<ul id="preview-container"></ul><input type="text" id="chatInput" placeholder="enter a chat message" autocomplete="off" maxlength="255" />';
       document.body.insertAdjacentHTML(
             'afterbegin', 
             fixture);
 
         mc = new MultiComplete({
-            input: "#chatInput",
-            datasets : datasets
+          input: "#chatInput",
+          output: "#preview-container",
+          datasets : datasets,
+          fuzzyFilter : false,
+          beforeReplace: function(marker, str) {
+            if (marker === ":") {
+              return ":" + str + ":";
+            }
+            if (marker === "@") {
+              return "@" + str;
+            }
+            if (marker === "/") {
+              return "/" + str;
+            }
+          },
+          getActiveText: function($elem) {
+            return $elem.find("span").text();
+          },
+          outputTemplate : function(marker, str) {
+            if (marker === ":") {
+              return 'emoji: <span>'+str+'</span>';
+            }
+            if (marker === "@") {
+              return 'mention: <span>'+str+'</span>';
+            }
+            if (marker === "/") {
+              return 'command: <span>'+str+'</span>';
+            }
+          }
         });
     });
 
@@ -35,7 +62,13 @@ describe("Multicomplete suite", function() {
         expect(mc.markersRegex).toEqual(/[@:\/]/i);
     });
 
-    it('Should properly escape regex characters', function(){
+    it('testCharAndFilter should return an array with', function(){
+      expect(mc.testCharAndFilter(":","sm")).toEqual(["smiley", "smile"]);
+      expect(mc.testCharAndFilter("/","b")).toEqual(["ban"]);
+      expect(mc.testCharAndFilter("@","m")).toEqual(["mountain", "moe"]);
+    });
+
+    it('makeRegex should properly escape regex characters', function(){
       expect(mc.makeRegex("@:/")).toEqual(/[@:\/]/i);
       expect(mc.makeRegex("@(:/")).toEqual(/[@\(:\/]/i);
       expect(mc.makeRegex("):/")).toEqual(/[\):\/]/i);
@@ -44,25 +77,25 @@ describe("Multicomplete suite", function() {
       expect(mc.makeRegex("@^\\")).toEqual(/[@\^\\]/i);
     });
 
-    it('Should return the correct next space given a string and starting index', function() {
+    it('getNextSpace should return the correct next space given a string and starting index', function() {
       expect(mc.getNextSpace('string', 0)).toEqual(6);
       expect(mc.getNextSpace('', 0)).toEqual(0);
       expect(mc.getNextSpace('the string is long and winding', 15)).toEqual(18);
       expect(mc.getNextSpace('a middle word', 2)).toEqual(8);
     });
 
-    it('Should return the correct previous space given a string and starting index', function(){
+    it('getPrevSpace should return the correct previous space given a string and starting index', function(){
       expect(mc.getPrevSpace('string', 5)).toEqual(0);
       expect(mc.getPrevSpace("what's up @doc", 11)).toEqual(10);
       expect(mc.getPrevSpace("I'm :smiley: face", 8)).toEqual(4);
     });
 
-    it('Should return the correct array of indexes given a string and starting index', function(){
+    it('findPositions should return the correct array of indexes given a string and starting index', function(){
       expect(mc.findPositions("what's up @doc", 11)).toEqual([10,14]);
       expect(mc.findPositions('the :smiley: is long and winding', 7)).toEqual([4,12]);
     });
 
-    it('Should filter for given word', function(){
+    it('filteredData should filter for given word', function(){
       $('#chatInput').val(':cat');
       $('#chatInput').trigger('keyup');
       expect(mc.info.filteredData).toEqual(['cat']);

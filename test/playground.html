@@ -106,6 +106,9 @@
           if (marker === "@") {
             return "@" + str;
           }
+          if (marker === "/") {
+            return "/" + str;
+          }
         },
         getActiveText: function($elem) {
           return $elem.find("span").text();
@@ -116,6 +119,9 @@
           }
           if (marker === "@") {
             return 'mention: <span>'+str+'</span>';
+          }
+          if (marker === "/") {
+            return 'command: <span>'+str+'</span>';
           }
         }
       });

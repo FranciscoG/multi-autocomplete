@@ -27,32 +27,6 @@
      */
     this.opts = $.extend(true, {}, defaults, options);
 
-    /**
-     * Caching jQuery selectors and checking for 
-     * required options
-     */
-    
-    this.$input = $(this.opts.input);
-    if (!this.opts.input || !this.$input.length) {
-      this.warn("input option not provided or element is missing");
-      return;
-    }
-    
-    this.$output = $(this.opts.output);
-    if (!this.opts.output || !this.$output.length) {
-      this.warn("preview container not provided or element is missing");
-      return;
-    }
-    
-    /**
-     * Caching important DOM nodes when we need to use
-     * straight up Javascript instead of jQuery
-     * @type {[type]}
-     */
-    this.inputNode = this.$input.get(0);
-    this.outputNode = this.$output.get(0);
-    this.outputNode.tabIndex = 0;
-
     this.keys = {
       up        : 38,
       down      : 40,
@@ -65,7 +39,7 @@
       backspace : 8,
       del       : 46,
       space     : 32,
-      ctrl      : 17,
+      ctrl      : 17
     };
 
     this.states = {
@@ -78,20 +52,48 @@
       shiftDown : false
     };
 
-    this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
-
-    $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
-    $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
-
-    this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
-    this.$output.on('keyup', $.proxy(this.outputKeyup, this));
-
   }
 
   PreviewHandler.prototype = {
     
+    init: function(){
+      /**
+       * Caching jQuery selectors and checking for 
+       * required options
+       */
+      
+      this.$input = $(this.opts.input);
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        return;
+      }
+      
+      this.$output = $(this.opts.output);
+      if (!this.opts.output || !this.$output.length) {
+        this.warn("preview container not provided or element is missing");
+        return;
+      }
+      
+      /**
+       * Caching important DOM nodes when we need to use
+       * straight up Javascript instead of jQuery
+       * @type {[type]}
+       */
+      this.inputNode = this.$input.get(0);
+      this.outputNode = this.$output.get(0);
+      this.outputNode.tabIndex = 0;
+
+      this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
+
+      $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
+      $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+
+      this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
+      this.$output.on('keyup', $.proxy(this.outputKeyup, this));
+    },
+
     warn: function(stuff){
-      if (console && console.warn) { console.warn("mutlicomplete:",stuff) ;}
+      throw new Error(stuff);
     },
 
     modifierKeysDown: function(e) {

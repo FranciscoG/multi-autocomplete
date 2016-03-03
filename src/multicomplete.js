@@ -6,7 +6,7 @@
    * browser compatibility, mainly for these:
    * 
    * $.extend - instead of using Object.assign
-   * $.proxy  - instead of function.bind(this)
+   * $.proxy  - instead of function.bind()
    * $.grep   - instead of Array.filter
    * $.on     - instead of addEventListener
    *
@@ -45,8 +45,7 @@
       /**
        * Caching jQuery selectors and checking for 
        * required options
-       */
-      
+       // */
       this.$input = $(this.opts.input);
       if (!this.opts.input || !this.$input.length) {
         this.warn("input option not provided or element is missing");
@@ -81,6 +80,9 @@
       };
       
       this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+
+      this.previewhandler = new PreviewHandler(this.opts);
+      this.previewhandler.init();
     },
 
     makeRegex: function(markers) {
@@ -210,7 +212,9 @@
       });
     },
 
-    sendToPreview: function(x) {
+    sendToPreview: function(filteredData) {
+      this.previewhandler.info = this.info;
+      this.previewhandler.addToPreview(filteredData);
       // console.log(x, this.info);
       // this is where we connect to the PreviewHandler lib
     },

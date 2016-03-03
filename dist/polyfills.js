@@ -2,7 +2,7 @@
  *
  * Array.filter
  * Object.assign
- * function.bind(this)
+ * Function.bind()
  * addEventListener
  *
  * Object.Assign is the more recent one where only the last few versions of modern browsers have been

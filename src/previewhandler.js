@@ -44,7 +44,8 @@
 
     this.states = {
       isPreviewing : false,
-      inputHasFocus: false
+      inputHasFocus: false,
+      hasCancelled: false
     };
 
     this.modKeys = {
@@ -128,15 +129,16 @@
       switch (e.keyCode) {
         case this.keys.up:
           if (this.states.isPreviewing) {
-            this.navPreview(-1);
             e.preventDefault();
+            this.navPreview(-1);
             return false;
           }
           break;
+        case this.keys.tab:
         case this.keys.down:
           if (this.states.isPreviewing) {
-            this.navPreview(1);
             e.preventDefault();
+            this.navPreview(1);
             return false;
           }
           break;
@@ -154,21 +156,24 @@
         case this.keys.enter:
           if (this.states.isPreviewing) {
             this.useActiveText();
-            this.clearPreview();
             e.preventDefault();
             e.stopImmediatePropagation();
+            return false;
+          }
+          this.clearPreview();
+          break;
+        case this.keys.esc:
+          if (this.states.isPreviewing) {
+            this.clearPreview();
+            this.states.isPreviewing = false;
+            this.states.hasCancelled = true;
             return false;
           }
           break;
-        case this.keys.tab:
-          if (this.states.isPreviewing) {
-            this.useActiveText();
-            this.clearPreview();
-
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            return false;
-          }
+        case this.keys.space:
+          this.states.hasCancelled = false;
+          this.states.isPreviewing = false;
+          this.clearPreview();
           break;
         default:
           this.states.isPreviewing = false;
@@ -184,6 +189,9 @@
     },
 
     addToPreview: function(filteredData) {
+      if (this.states.hasCancelled) {
+        return false;
+      }
       this.clearPreview();
       this.states.isPreviewing = true;
       var self = this;
@@ -250,7 +258,7 @@
       } else {
         newText = $(e.target).text();
       }
-      
+
       this.replaceInPlace(newText);
       this.clearPreview();
     },

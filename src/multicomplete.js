@@ -45,7 +45,7 @@
       /**
        * Caching jQuery selectors and checking for 
        * required options
-       // */
+       */
       this.$input = $(this.opts.input);
       if (!this.opts.input || !this.$input.length) {
         this.warn("input option not provided or element is missing");

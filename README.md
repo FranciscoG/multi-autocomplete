@@ -9,6 +9,7 @@ A Portable library that's intended to handle the intricacies of autocomplete fil
 I started developing it as part of the [DubX](https://github.com/sinfulBA/DubX-Script) plugin/extension for [Dubtrack.fm](http://dubtrack.fm) to autocomplete emojis and mentions but decided to separate it so I can improve and test
 
 
+
 ------
 
 Breaking this down into 2 parts.  One separate mini-libraries takes in a dataset, listens for input and filters data accordingly and returns an array.  The other part handles outputing the filtered data to the screen and all the event related to selecting and placing that selection into the input.

@@ -136,7 +136,13 @@
           break;
         case this.keys.tab:
         case this.keys.down:
-          if (this.states.isPreviewing) {
+          // if preview Items lengh === 1 do like selecting word
+          if (this.info.filteredDataLength === 1) {
+            this.useActiveText();
+            this.clearPreview();
+            e.preventDefault();
+            return false;
+          } else if (this.states.isPreviewing) {
             e.preventDefault();
             this.navPreview(1);
             return false;
@@ -158,7 +164,6 @@
             this.useActiveText();
             e.preventDefault();
             e.stopImmediatePropagation();
-            return false;
           }
           this.clearPreview();
           break;
@@ -276,7 +281,7 @@
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
-      this.$input.val(newVal);
+      this.$input.val(newVal + ' ');
       this.setCursorPosition(this.info.end);
     },
 
@@ -386,7 +391,6 @@
       /**
        * Caching important DOM nodes when we need to use
        * straight up Javascript instead of jQuery
-       * @type {[type]}
        */
       this.inputNode = this.$input.get(0);
 
@@ -396,16 +400,31 @@
       
       this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
 
+      /* global PreviewHandler */
       this.previewhandler = new PreviewHandler(this.opts);
       this.previewhandler.init();
     },
 
+    /**
+     * Takes the markers from the dataset object and creates a
+     * regex to test input value and see if filtering needs to begin
+     * Properly escapes any Regex-specific characters in case user
+     * decides to use one of those as a marker
+     * @param  {String} markers
+     * @return {Regex}         
+     */
     makeRegex: function(markers) {
       // some help from http://stackoverflow.com/a/5664273/395414
       var regString = markers.replace(/([()[{*+.$^\\|?])/g, '\\$1');
       return new RegExp("["+regString+"]", "i");
     },
 
+    /**
+     * Wrapper around new Error but possibly thinking about making
+     * it just do console.warn instead, hence the function name
+     * @param  {String} stuff The error/warn message
+     * @return {Error}       
+     */
     warn: function(stuff){
       throw new Error(stuff);
     },
@@ -432,6 +451,13 @@
       return returnIndex < 0 ? 0 : returnIndex + 1;
     },
 
+    /**
+     * Finds the starting and ending index of the closest word
+     * to the cursor in the input. 
+     * @param  {String} val       The whole current value of the input field
+     * @param  {Number} cursorPos The current index of the cursor in the input
+     * @return {Array}            Returns an array with the starting and ending values.  Array will always have length of 2
+     */
     findPositions: function(val, cursorPos) {
       var startIndex;
       var endIndex;
@@ -487,7 +513,7 @@
         return;
       }
 
-      if (!val || !this.info.activeMarker) {
+      if (!val || !this.info.activeMarker || val === '') {
         this.noData();
       }
     },

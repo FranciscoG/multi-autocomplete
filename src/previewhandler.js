@@ -136,7 +136,13 @@
           break;
         case this.keys.tab:
         case this.keys.down:
-          if (this.states.isPreviewing) {
+          // if preview Items lengh === 1 do like selecting word
+          if (this.info.filteredDataLength === 1) {
+            this.useActiveText();
+            this.clearPreview();
+            e.preventDefault();
+            return false;
+          } else if (this.states.isPreviewing) {
             e.preventDefault();
             this.navPreview(1);
             return false;
@@ -158,7 +164,6 @@
             this.useActiveText();
             e.preventDefault();
             e.stopImmediatePropagation();
-            return false;
           }
           this.clearPreview();
           break;
@@ -276,7 +281,7 @@
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
-      this.$input.val(newVal);
+      this.$input.val(newVal + ' ');
       this.setCursorPosition(this.info.end);
     },
 

@@ -35,7 +35,7 @@ gulp.task('concat', function() {
 
 /**********************************************
  * Run jasmine test
- * use `npm test` instsead
+ * use `npm test` instead
  */
 
 

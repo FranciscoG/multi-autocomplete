@@ -1,5 +1,5 @@
 (function(){
-  'use strict';
+  "use strict";
 
   function PreviewHandler(options){
     if (!(this instanceof PreviewHandler)) {
@@ -64,14 +64,10 @@
        */
       
       this.$input = $(this.opts.input);
-      if (!this.opts.input || !this.$input.length) {
-        this.warn("input option not provided or element is missing");
-        return;
-      }
-      
       this.$output = $(this.opts.output);
-      if (!this.opts.output || !this.$output.length) {
-        this.warn("preview container not provided or element is missing");
+
+      var reqs = this.checkRequirements();
+      if (!reqs) {
         return;
       }
       
@@ -91,6 +87,19 @@
 
       this.$output.on("click", this.opts.outputDom, $.proxy(this.onClickPick, this));
       this.$output.on("keyup", $.proxy(this.outputKeyup, this));
+    },
+
+    checkRequirements: function(){
+      var result = true;
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        result = false;
+      }
+      if (!this.opts.output || !this.$output.length) {
+        this.warn("preview container not provided or element is missing");
+        result = false;
+      }
+      return result;
     },
 
     warn: function(stuff){
@@ -295,7 +304,7 @@
           range.select();
       } else {
           elem.focus();
-          if (elem.selectionStart !== undefined) {
+          if (elem.selectionStart !== void(0)) { // void(0) always gives you undefined
               elem.setSelectionRange(pos, pos);
           }
       }

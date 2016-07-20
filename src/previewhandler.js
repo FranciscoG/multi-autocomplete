@@ -84,13 +84,13 @@
       this.outputNode = this.$output.get(0);
       this.outputNode.tabIndex = 0;
 
-      this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
+      this.$input.on("keydown", $.proxy(this.onInputKeydown, this));
 
-      $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
-      $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+      $(document).on("keyup", $.proxy(this.modifierKeysUp, this));
+      $(document).on("keydown", $.proxy(this.modifierKeysDown, this));
 
-      this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
-      this.$output.on('keyup', $.proxy(this.outputKeyup, this));
+      this.$output.on("click", this.opts.outputDom, $.proxy(this.onClickPick, this));
+      this.$output.on("keyup", $.proxy(this.outputKeyup, this));
     },
 
     warn: function(stuff){
@@ -205,7 +205,7 @@
       $.each(filteredData, function(i, el){
         var item = document.createElement(self.opts.outputDom);
         
-        if (typeof self.opts.outputTemplate === 'function') {
+        if (typeof self.opts.outputTemplate === "function") {
           item.innerHTML = self.opts.outputTemplate(self.info.activeMarker, el);
         } else {
           item.textContent = el;
@@ -222,7 +222,7 @@
     },
 
     navPreview: function(incrementBy) {
-      var activeIndex = this.$output.find('.' + this.opts.activeClass).index();
+      var activeIndex = this.$output.find("." + this.opts.activeClass).index();
       var newItem = activeIndex + incrementBy;
 
       var childLen = this.$collection.length;
@@ -238,7 +238,7 @@
 
     // probably should rename this to differ from the option
     getActiveText: function(andScroll){
-      var $newActive = this.$output.find('.' + this.opts.activeClass);
+      var $newActive = this.$output.find("." + this.opts.activeClass);
       if (andScroll) {
         this.scrollOutput($newActive);
       }
@@ -277,12 +277,12 @@
 
     replaceInPlace: function(str){
       var val = this.info.val;
-      if (typeof this.opts.beforeReplace === 'function') {
+      if (typeof this.opts.beforeReplace === "function") {
         str = this.opts.beforeReplace(this.info.activeMarker, str);
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
-      this.$input.val(newVal + ' ');
+      this.$input.val(newVal + " ");
       this.setCursorPosition(this.info.end);
     },
 
@@ -291,7 +291,7 @@
       var elem = this.inputNode;
       if (elem.createTextRange) {
           range = elem.createTextRange();
-          range.move('character', pos);
+          range.move("character", pos);
           range.select();
       } else {
           elem.focus();
@@ -306,9 +306,9 @@
 
   /* global define */
   (function(root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
       return define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
       return module.exports = factory();
     } else {
       return root.PreviewHandler = factory();

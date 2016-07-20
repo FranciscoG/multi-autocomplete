@@ -1,3 +1,7 @@
+# MultiComplete
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ae5d18ae04034c63a18768fead672b63)](https://www.codacy.com/app/frankjg/multicomplete?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=FranciscoG/multicomplete&amp;utm_campaign=Badge_Grade)
+
 ## nothing to see here yet.
 
 dependency: jQuery 
@@ -20,7 +24,7 @@ Breaking this down into 2 parts.  One separate mini-libraries takes in a dataset
 `npm install gulp karma-cli -g`
 
 
-http://www.bradoncode.com/blog/2015/02/27/karma-tutorial/
-http://www.thetechnologystudio.co.uk/blog/using-gulp-and-karma-to-test-a-jquery-plugin/
-https://www.youtube.com/watch?v=HqdZcNorTL0
-http://www.tikalk.com/js/setup-karma-for-js-testing/
+http://www.bradoncode.com/blog/2015/02/27/karma-tutorial/    
+http://www.thetechnologystudio.co.uk/blog/using-gulp-and-karma-to-test-a-jquery-plugin/    
+https://www.youtube.com/watch?v=HqdZcNorTL0    
+http://www.tikalk.com/js/setup-karma-for-js-testing/    

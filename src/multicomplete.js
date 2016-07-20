@@ -78,7 +78,7 @@
         filteredDataLength: 0
       };
       
-      this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+      this.$input.on("keyup", $.proxy(this.onInputKeyup, this));
 
       /* global PreviewHandler */
       this.previewhandler = new PreviewHandler(this.opts);
@@ -116,7 +116,7 @@
      * @return {Number}       The index of the next space
      */
     getNextSpace: function(str, start) {
-      var returnIndex = str.substring(start, str.length).indexOf(' ');
+      var returnIndex = str.substring(start, str.length).indexOf(" ");
       return (returnIndex < 0)? str.length : returnIndex + start;
     },
 
@@ -127,7 +127,7 @@
      * @return {Number}       The index of the beginning of the word 
      */
     getPrevSpace: function(str, end) {
-      var returnIndex =  str.substring(0, end).lastIndexOf(' ');
+      var returnIndex =  str.substring(0, end).lastIndexOf(" ");
       return returnIndex < 0 ? 0 : returnIndex + 1;
     },
 
@@ -193,7 +193,7 @@
         return;
       }
 
-      if (!val || !this.info.activeMarker || val === '') {
+      if (!val || !this.info.activeMarker || val === "") {
         this.noData();
       }
     },
@@ -248,9 +248,9 @@
 
   /* global define */
   (function(root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
       return define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
       return module.exports = factory();
     } else {
       return root.MultiComplete = factory();

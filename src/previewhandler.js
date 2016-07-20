@@ -258,10 +258,11 @@
 
     onClickPick: function(e){
       var newText;
+      var $targ = $(e.target);
       if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText($(e.target));
+        newText = this.opts.getActiveText( $targ );
       } else {
-        newText = $(e.target).text();
+        newText = $targ.text();
       }
 
       this.replaceInPlace(newText);

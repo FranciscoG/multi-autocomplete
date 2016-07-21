@@ -1,5 +1,5 @@
 (function(){
-  'use strict';
+  "use strict";
 
   /**
    * In this part of the lib I'm using jQuery for backwards 
@@ -9,6 +9,7 @@
    * $.proxy  - instead of function.bind()
    * $.grep   - instead of Array.filter
    * $.on     - instead of addEventListener
+   * $        - instead of querySelector
    *
    * I'm considering maybe just adding a polyfills.js and converting 
    * this all to vanilla JS.  But for now I'm sticking to jQuery
@@ -47,26 +48,11 @@
        * required options
        */
       this.$input = $(this.opts.input);
-      if (!this.opts.input || !this.$input.length) {
-        this.warn("input option not provided or element is missing");
-        return;
-      }
-      
-      
-      if (!this.opts.datasets) {
-        this.warn("no datasets provided or error loading them");
-        return;
-      }
 
-      /**
-       * Create a regex from the markers for the dataset
-       * to indicate when to start filtering data
-       */
-      var markers = "";
-      for (var key in this.opts.datasets) {
-        markers += key;
+      var reqs = this.checkRequirements();
+      if (!reqs) {
+        return;
       }
-      this.markersRegex = this.makeRegex(markers);
 
       /**
        * Caching important DOM nodes when we need to use
@@ -74,15 +60,50 @@
        */
       this.inputNode = this.$input.get(0);
 
+      /**
+       * Create a regex from the markers for the dataset
+       * to indicate when to start filtering data
+       */
+      this.getMarkers();
+
+      /**
+       * Setting some defaults internal variables
+       */
       this.info = {
         filteredDataLength: 0
       };
       
-      this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+      /**
+       * Start listening for input keyup
+       */
+      this.$input.on("keyup", $.proxy(this.onInputKeyup, this));
 
       /* global PreviewHandler */
       this.previewhandler = new PreviewHandler(this.opts);
       this.previewhandler.init();
+    },
+
+    checkRequirements: function(){
+      var result = true;
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        result = false;
+      }
+      if (!this.opts.datasets) {
+        this.warn("no datasets provided or error loading them");
+        result = false;
+      }
+      return result;
+    },
+
+    getMarkers: function(){
+      var markers = "";
+      for (var key in this.opts.datasets) {
+        if ({}.hasOwnProperty.call(this.opts.datasets, key)) {
+          markers += key;
+        }
+      }
+      this.markersRegex = this.makeRegex(markers);
     },
 
     /**
@@ -95,7 +116,7 @@
      */
     makeRegex: function(markers) {
       // some help from http://stackoverflow.com/a/5664273/395414
-      var regString = markers.replace(/([()[{*+.$^\\|?])/g, '\\$1');
+      var regString = markers.replace(/([()[{*+.$^\\|?])/g, "\\$1");
       return new RegExp("["+regString+"]", "i");
     },
 
@@ -116,7 +137,7 @@
      * @return {Number}       The index of the next space
      */
     getNextSpace: function(str, start) {
-      var returnIndex = str.substring(start, str.length).indexOf(' ');
+      var returnIndex = str.substring(start, str.length).indexOf(" ");
       return (returnIndex < 0)? str.length : returnIndex + start;
     },
 
@@ -127,7 +148,7 @@
      * @return {Number}       The index of the beginning of the word 
      */
     getPrevSpace: function(str, end) {
-      var returnIndex =  str.substring(0, end).lastIndexOf(' ');
+      var returnIndex =  str.substring(0, end).lastIndexOf(" ");
       return returnIndex < 0 ? 0 : returnIndex + 1;
     },
 
@@ -170,34 +191,38 @@
       var val = this.inputNode.value;
       
       if (val) {
-        var cursorPos = this.inputNode.selectionStart;
-        var currentIndexes = this.findPositions(val, cursorPos);
-        var currentWord = val.substring(currentIndexes[0],currentIndexes[1]);
-
-        this.info = {
-          start: currentIndexes[0], 
-          end: currentIndexes[1],
-          cursorPos: cursorPos,
-          fullStr: currentWord,
-          filterStr : currentWord.substr(1),
-          val: val
-        };
-
-        var firstCharOfWord = currentWord.charAt(0);
-        var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
-        if (filtered.length > 0) {
-          this.sendToPreview(filtered);
-        } else {
-          this.noData();
-        }
+        this.handleValue(val);
         return;
       }
 
-      if (!val || !this.info.activeMarker || val === '') {
+      if (!val || !this.info.activeMarker || val === "") {
         this.noData();
       }
     },
 
+    handleValue: function(val){
+      var cursorPos = this.inputNode.selectionStart;
+      var currentIndexes = this.findPositions(val, cursorPos);
+      var currentWord = val.substring(currentIndexes[0],currentIndexes[1]);
+
+      this.info = {
+        start: currentIndexes[0], 
+        end: currentIndexes[1],
+        cursorPos: cursorPos,
+        fullStr: currentWord,
+        filterStr : currentWord.substr(1),
+        val: val
+      };
+
+      var firstCharOfWord = currentWord.charAt(0);
+      var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
+      
+      if (filtered.length > 0) {
+        this.sendToPreview(filtered);
+      } else {
+        this.noData();
+      }
+    },
 
     /**
      * Sets which part of the dataset to look into to start filtereing
@@ -248,9 +273,9 @@
 
   /* global define */
   (function(root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
       return define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
       return module.exports = factory();
     } else {
       return root.MultiComplete = factory();

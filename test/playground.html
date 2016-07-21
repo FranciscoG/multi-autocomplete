@@ -46,7 +46,6 @@
         and adding a keyup event
       */
       $('#chatInput').on('keyup', function (e) {
-        e.preventDefault();
         // console.log(e.keyCode);
         if (e.keyCode === 13) {
           createChatMessage($(this).val());

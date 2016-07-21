@@ -110,7 +110,11 @@
           }
         },
         getActiveText: function($elem) {
-          return $elem.find('span').text();
+          if ( $elem.prop('tagName') === "SPAN" ) {
+            return $elem.text();
+          } else {
+            return $elem.find('span').text();
+          }
         },
         outputTemplate : function(marker, str) {
           if (marker === ":") {

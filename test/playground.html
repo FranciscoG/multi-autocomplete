@@ -111,7 +111,7 @@
           }
         },
         getActiveText: function($elem) {
-          return $elem.text();
+          return $elem.find('span').text();
         },
         outputTemplate : function(marker, str) {
           if (marker === ":") {

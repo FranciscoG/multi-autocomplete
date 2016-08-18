@@ -217,11 +217,7 @@
       var firstCharOfWord = currentWord.charAt(0);
       var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
       
-      if (filtered.length > 0) {
-        this.sendToPreview(filtered);
-      } else {
-        this.noData();
-      }
+      this.sendToPreview(filtered);
     },
 
     /**

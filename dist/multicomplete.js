@@ -1,5 +1,5 @@
 (function(){
-  'use strict';
+  "use strict";
 
   function PreviewHandler(options){
     if (!(this instanceof PreviewHandler)) {
@@ -64,14 +64,10 @@
        */
       
       this.$input = $(this.opts.input);
-      if (!this.opts.input || !this.$input.length) {
-        this.warn("input option not provided or element is missing");
-        return;
-      }
-      
       this.$output = $(this.opts.output);
-      if (!this.opts.output || !this.$output.length) {
-        this.warn("preview container not provided or element is missing");
+
+      var reqs = this.checkRequirements();
+      if (!reqs) {
         return;
       }
       
@@ -84,13 +80,26 @@
       this.outputNode = this.$output.get(0);
       this.outputNode.tabIndex = 0;
 
-      this.$input.on('keydown', $.proxy(this.onInputKeydown, this));
+      this.$input.on("keydown", $.proxy(this.onInputKeydown, this));
 
-      $(document).on('keyup', $.proxy(this.modifierKeysUp, this));
-      $(document).on('keydown', $.proxy(this.modifierKeysDown, this));
+      $(document).on("keyup", $.proxy(this.modifierKeysUp, this));
+      $(document).on("keydown", $.proxy(this.modifierKeysDown, this));
 
-      this.$output.on('click', this.opts.outputDom, $.proxy(this.onClickPick, this));
-      this.$output.on('keyup', $.proxy(this.outputKeyup, this));
+      this.$output.on("click", this.opts.outputDom, $.proxy(this.onClickPick, this));
+      this.$output.on("keyup", $.proxy(this.outputKeyup, this));
+    },
+
+    checkRequirements: function(){
+      var result = true;
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        result = false;
+      }
+      if (!this.opts.output || !this.$output.length) {
+        this.warn("preview container not provided or element is missing");
+        result = false;
+      }
+      return result;
     },
 
     warn: function(stuff){
@@ -139,10 +148,12 @@
           // if preview Items lengh === 1 do like selecting word
           if (this.info.filteredDataLength === 1) {
             this.useActiveText();
-            this.clearPreview();
+            this.clearPreview(true);
             e.preventDefault();
             return false;
-          } else if (this.states.isPreviewing) {
+          } 
+
+          if (this.states.isPreviewing) {
             e.preventDefault();
             this.navPreview(1);
             return false;
@@ -154,7 +165,7 @@
           }
           if (this.states.isPreviewing) {
             this.useActiveText();
-            this.clearPreview();
+            this.clearPreview(true);
             e.preventDefault();
             return false;
           }
@@ -169,7 +180,7 @@
           break;
         case this.keys.esc:
           if (this.states.isPreviewing) {
-            this.clearPreview();
+            this.clearPreview(true);
             this.states.isPreviewing = false;
             this.states.hasCancelled = true;
             return false;
@@ -187,16 +198,22 @@
       return true;
     },
 
-    clearPreview: function() {
+    clearPreview: function(hide) {
       this.$output.empty();
-      this.$output.hide();
       this.states.isPreviewing = false;
+      if (hide){
+        this.$output.hide();
+      }
     },
 
     addToPreview: function(filteredData) {
-      if (this.states.hasCancelled) {
+      console.log(filteredData);
+
+      if (this.states.hasCancelled || filteredData.length === 0) {
+        this.clearPreview(true);
         return false;
       }
+      
       this.clearPreview();
       this.states.isPreviewing = true;
       var self = this;
@@ -205,7 +222,7 @@
       $.each(filteredData, function(i, el){
         var item = document.createElement(self.opts.outputDom);
         
-        if (typeof self.opts.outputTemplate === 'function') {
+        if (typeof self.opts.outputTemplate === "function") {
           item.innerHTML = self.opts.outputTemplate(self.info.activeMarker, el);
         } else {
           item.textContent = el;
@@ -222,7 +239,7 @@
     },
 
     navPreview: function(incrementBy) {
-      var activeIndex = this.$output.find('.' + this.opts.activeClass).index();
+      var activeIndex = this.$output.find("." + this.opts.activeClass).index();
       var newItem = activeIndex + incrementBy;
 
       var childLen = this.$collection.length;
@@ -238,7 +255,7 @@
 
     // probably should rename this to differ from the option
     getActiveText: function(andScroll){
-      var $newActive = this.$output.find('.' + this.opts.activeClass);
+      var $newActive = this.$output.find("." + this.opts.activeClass);
       if (andScroll) {
         this.scrollOutput($newActive);
       }
@@ -266,7 +283,7 @@
       }
 
       this.replaceInPlace(newText);
-      this.clearPreview();
+      this.clearPreview(true);
     },
 
     scrollOutput: function($elem){
@@ -277,12 +294,12 @@
 
     replaceInPlace: function(str){
       var val = this.info.val;
-      if (typeof this.opts.beforeReplace === 'function') {
+      if (typeof this.opts.beforeReplace === "function") {
         str = this.opts.beforeReplace(this.info.activeMarker, str);
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
-      this.$input.val(newVal + ' ');
+      this.$input.val(newVal + " ");
       this.setCursorPosition(this.info.end);
     },
 
@@ -291,11 +308,11 @@
       var elem = this.inputNode;
       if (elem.createTextRange) {
           range = elem.createTextRange();
-          range.move('character', pos);
+          range.move("character", pos);
           range.select();
       } else {
           elem.focus();
-          if (elem.selectionStart !== undefined) {
+          if (elem.selectionStart !== void(0)) { // void(0) always gives you undefined
               elem.setSelectionRange(pos, pos);
           }
       }
@@ -306,9 +323,9 @@
 
   /* global define */
   (function(root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
       return define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
       return module.exports = factory();
     } else {
       return root.PreviewHandler = factory();
@@ -320,7 +337,7 @@
 
 }).call(this);
 (function(){
-  'use strict';
+  "use strict";
 
   /**
    * In this part of the lib I'm using jQuery for backwards 
@@ -330,6 +347,7 @@
    * $.proxy  - instead of function.bind()
    * $.grep   - instead of Array.filter
    * $.on     - instead of addEventListener
+   * $        - instead of querySelector
    *
    * I'm considering maybe just adding a polyfills.js and converting 
    * this all to vanilla JS.  But for now I'm sticking to jQuery
@@ -368,26 +386,11 @@
        * required options
        */
       this.$input = $(this.opts.input);
-      if (!this.opts.input || !this.$input.length) {
-        this.warn("input option not provided or element is missing");
-        return;
-      }
-      
-      
-      if (!this.opts.datasets) {
-        this.warn("no datasets provided or error loading them");
-        return;
-      }
 
-      /**
-       * Create a regex from the markers for the dataset
-       * to indicate when to start filtering data
-       */
-      var markers = "";
-      for (var key in this.opts.datasets) {
-        markers += key;
+      var reqs = this.checkRequirements();
+      if (!reqs) {
+        return;
       }
-      this.markersRegex = this.makeRegex(markers);
 
       /**
        * Caching important DOM nodes when we need to use
@@ -395,15 +398,50 @@
        */
       this.inputNode = this.$input.get(0);
 
+      /**
+       * Create a regex from the markers for the dataset
+       * to indicate when to start filtering data
+       */
+      this.getMarkers();
+
+      /**
+       * Setting some defaults internal variables
+       */
       this.info = {
         filteredDataLength: 0
       };
       
-      this.$input.on('keyup', $.proxy(this.onInputKeyup, this));
+      /**
+       * Start listening for input keyup
+       */
+      this.$input.on("keyup", $.proxy(this.onInputKeyup, this));
 
       /* global PreviewHandler */
       this.previewhandler = new PreviewHandler(this.opts);
       this.previewhandler.init();
+    },
+
+    checkRequirements: function(){
+      var result = true;
+      if (!this.opts.input || !this.$input.length) {
+        this.warn("input option not provided or element is missing");
+        result = false;
+      }
+      if (!this.opts.datasets) {
+        this.warn("no datasets provided or error loading them");
+        result = false;
+      }
+      return result;
+    },
+
+    getMarkers: function(){
+      var markers = "";
+      for (var key in this.opts.datasets) {
+        if ({}.hasOwnProperty.call(this.opts.datasets, key)) {
+          markers += key;
+        }
+      }
+      this.markersRegex = this.makeRegex(markers);
     },
 
     /**
@@ -416,7 +454,7 @@
      */
     makeRegex: function(markers) {
       // some help from http://stackoverflow.com/a/5664273/395414
-      var regString = markers.replace(/([()[{*+.$^\\|?])/g, '\\$1');
+      var regString = markers.replace(/([()[{*+.$^\\|?])/g, "\\$1");
       return new RegExp("["+regString+"]", "i");
     },
 
@@ -437,7 +475,7 @@
      * @return {Number}       The index of the next space
      */
     getNextSpace: function(str, start) {
-      var returnIndex = str.substring(start, str.length).indexOf(' ');
+      var returnIndex = str.substring(start, str.length).indexOf(" ");
       return (returnIndex < 0)? str.length : returnIndex + start;
     },
 
@@ -448,7 +486,7 @@
      * @return {Number}       The index of the beginning of the word 
      */
     getPrevSpace: function(str, end) {
-      var returnIndex =  str.substring(0, end).lastIndexOf(' ');
+      var returnIndex =  str.substring(0, end).lastIndexOf(" ");
       return returnIndex < 0 ? 0 : returnIndex + 1;
     },
 
@@ -491,34 +529,34 @@
       var val = this.inputNode.value;
       
       if (val) {
-        var cursorPos = this.inputNode.selectionStart;
-        var currentIndexes = this.findPositions(val, cursorPos);
-        var currentWord = val.substring(currentIndexes[0],currentIndexes[1]);
-
-        this.info = {
-          start: currentIndexes[0], 
-          end: currentIndexes[1],
-          cursorPos: cursorPos,
-          fullStr: currentWord,
-          filterStr : currentWord.substr(1),
-          val: val
-        };
-
-        var firstCharOfWord = currentWord.charAt(0);
-        var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
-        if (filtered.length > 0) {
-          this.sendToPreview(filtered);
-        } else {
-          this.noData();
-        }
+        this.handleValue(val);
         return;
       }
 
-      if (!val || !this.info.activeMarker || val === '') {
+      if (!val || !this.info.activeMarker || val === "") {
         this.noData();
       }
     },
 
+    handleValue: function(val){
+      var cursorPos = this.inputNode.selectionStart;
+      var currentIndexes = this.findPositions(val, cursorPos);
+      var currentWord = val.substring(currentIndexes[0],currentIndexes[1]);
+
+      this.info = {
+        start: currentIndexes[0], 
+        end: currentIndexes[1],
+        cursorPos: cursorPos,
+        fullStr: currentWord,
+        filterStr : currentWord.substr(1),
+        val: val
+      };
+
+      var firstCharOfWord = currentWord.charAt(0);
+      var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
+      
+      this.sendToPreview(filtered);
+    },
 
     /**
      * Sets which part of the dataset to look into to start filtereing
@@ -569,9 +607,9 @@
 
   /* global define */
   (function(root, factory) {
-    if (typeof define === 'function' && define.amd) {
+    if (typeof define === "function" && define.amd) {
       return define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
+    } else if (typeof module === "object" && module.exports) {
       return module.exports = factory();
     } else {
       return root.MultiComplete = factory();

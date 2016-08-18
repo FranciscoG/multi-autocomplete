@@ -148,10 +148,12 @@
           // if preview Items lengh === 1 do like selecting word
           if (this.info.filteredDataLength === 1) {
             this.useActiveText();
-            this.clearPreview();
+            this.clearPreview(true);
             e.preventDefault();
             return false;
-          } else if (this.states.isPreviewing) {
+          } 
+
+          if (this.states.isPreviewing) {
             e.preventDefault();
             this.navPreview(1);
             return false;
@@ -163,7 +165,7 @@
           }
           if (this.states.isPreviewing) {
             this.useActiveText();
-            this.clearPreview();
+            this.clearPreview(true);
             e.preventDefault();
             return false;
           }
@@ -178,7 +180,7 @@
           break;
         case this.keys.esc:
           if (this.states.isPreviewing) {
-            this.clearPreview();
+            this.clearPreview(true);
             this.states.isPreviewing = false;
             this.states.hasCancelled = true;
             return false;
@@ -196,16 +198,22 @@
       return true;
     },
 
-    clearPreview: function() {
+    clearPreview: function(hide) {
       this.$output.empty();
-      this.$output.hide();
       this.states.isPreviewing = false;
+      if (hide){
+        this.$output.hide();
+      }
     },
 
     addToPreview: function(filteredData) {
-      if (this.states.hasCancelled) {
+      console.log(filteredData);
+
+      if (this.states.hasCancelled || filteredData.length === 0) {
+        this.clearPreview(true);
         return false;
       }
+      
       this.clearPreview();
       this.states.isPreviewing = true;
       var self = this;
@@ -275,7 +283,7 @@
       }
 
       this.replaceInPlace(newText);
-      this.clearPreview();
+      this.clearPreview(true);
     },
 
     scrollOutput: function($elem){

@@ -1,23 +1,6 @@
 (function(){
   "use strict";
 
-  /**
-   * In this part of the lib I'm using jQuery for backwards 
-   * browser compatibility, mainly for these:
-   *
-   * $.trigger - instead of CustomEvent
-   * $.extend  - instead of using Object.assign
-   * $.proxy   - instead of function.bind()
-   * $.grep    - instead of Array.filter
-   * $.on      - instead of addEventListener and event delegation
-   * $         - instead of querySelector
-   *
-   * I'm considering maybe just adding a polyfills.js and converting 
-   * this all to vanilla JS.  But for now I'm sticking to jQuery
-   * I really don't want to deal with all the things jQuery fixes
-   */
-
-  /* global jQuery */
   function MultiComplete(options){
 
     if (!(this instanceof MultiComplete)) {
@@ -37,7 +20,7 @@
      * override internal defaults
      * @type {Object}
      */
-    this.opts = $.extend(true, {}, this.defaults, options);
+    this.opts = Object.assign({},  this.defaults, options);
 
     this.init();
   }
@@ -46,21 +29,15 @@
     
     init: function() {
       /**
-       * Caching jQuery selectors and checking for 
-       * required options
+       * Caching important DOM nodes when we need to use
+       * straight up Javascript instead of jQuery
        */
-      this.$input = $(this.opts.input);
+      this.inputNode = document.querySelector(this.opts.input);
 
       var reqs = this.checkRequirements();
       if (!reqs) {
         return;
       }
-
-      /**
-       * Caching important DOM nodes when we need to use
-       * straight up Javascript instead of jQuery
-       */
-      this.inputNode = this.$input.get(0);
 
       /**
        * Create a regex from the markers for the dataset
@@ -78,7 +55,8 @@
       /**
        * Start listening for input keyup
        */
-      this.$input.on("keyup", $.proxy(this.onInputKeyup, this));
+      this.inputNode.addEventListener('keyup', this.onInputKeyup.bind(this));
+
 
       /* global PreviewHandler */
       this.previewhandler = new PreviewHandler(this.opts);
@@ -87,7 +65,7 @@
 
     checkRequirements: function(){
       var result = true;
-      if (!this.opts.input || !this.$input.length) {
+      if (!this.opts.input || !this.inputNode) {
         this.warn("input option not provided or element is missing");
         result = false;
       }
@@ -244,7 +222,8 @@
      * @return {Array}              newly filtered array
      */
     getFilteredData: function(filterStr, fuzzyFilter, fullArray) {
-      return $.grep(fullArray, function(el){
+      
+      return fullArray.filter(function(el){
         if (fuzzyFilter === true) {
           return el.indexOf(filterStr) >= 0;
         } else {
@@ -256,8 +235,6 @@
     sendToPreview: function(filteredData) {
       this.previewhandler.info = this.info;
       this.previewhandler.addToPreview(filteredData);
-      // console.log(x, this.info);
-      // this is where we connect to the PreviewHandler lib
     }
 
   };

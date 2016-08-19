@@ -25,8 +25,8 @@ describe("Multicomplete suite", function() {
               return "/" + str;
             }
           },
-          getActiveText: function($elem) {
-            return $elem.find("span").text();
+          getActiveText: function(elem) {
+            return elem.querySelector("span").textContent;
           },
           outputTemplate : function(marker, str) {
             if (marker === ":") {
@@ -96,22 +96,34 @@ describe("Multicomplete suite", function() {
     });
 
     it("filteredData should filter for given word", function(){
-      $("#chatInput").val(":cat");
-      $("#chatInput").trigger("keyup");
+      document.getElementById("chatInput").value = ":cat";
+      
+      var event = document.createEvent('HTMLEvents');
+      event.initEvent('keyup', true, false);
+      document.getElementById("chatInput").dispatchEvent(event);
+      
       expect(mc.info.filteredData).toEqual(["cat"]);
     });
 
     it("Should extract the a word when a marker is detected", function(){
-      $("#chatInput").val("hello I am a @mountain goat");
+      document.getElementById("chatInput").value = "hello I am a @mountain goat";
       document.getElementById("chatInput").setSelectionRange(16, 16);
-      $("#chatInput").trigger("keyup");
+      
+      var event = document.createEvent('HTMLEvents');
+      event.initEvent('keyup', true, false);
+      document.getElementById("chatInput").dispatchEvent(event);
+
       expect(mc.info.fullStr).toEqual("@mountain");
     });
 
     it("Should fuzzy filter data properly", function(){
       mc.opts.fuzzyFilter = true;
-      $("#chatInput").val(":m");
-      $("#chatInput").trigger("keyup");
+      document.getElementById("chatInput").value = ":m";
+
+      var event = document.createEvent('HTMLEvents');
+      event.initEvent('keyup', true, false);
+      document.getElementById("chatInput").dispatchEvent(event);
+
       expect(mc.info.filteredData).toEqual(["smiley", "open_mouth", "smile", "unamused", "mask", "thumbsup", "thumbsdown"]);
     });
 

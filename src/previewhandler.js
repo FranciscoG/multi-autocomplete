@@ -1,6 +1,23 @@
 (function(){
   "use strict";
 
+  /**
+   * In this part of the lib I'm using jQuery for backwards 
+   * browser compatibility, mainly for these:
+   *
+   * $.extend  - instead of using Object.assign
+   * $.proxy   - instead of function.bind()
+   * $.grep    - instead of Array.filter
+   * $.on      - instead of addEventListener and event delegation
+   * $         - instead of querySelector and querySelectorAll
+   *
+   * I'm considering maybe just adding a polyfills.js and converting 
+   * this all to vanilla JS.  But for now I'm sticking to jQuery
+   * I really don't want to deal with all the things jQuery fixes
+   */
+
+  /* global jQuery */
+
   function PreviewHandler(options){
     if (!(this instanceof PreviewHandler)) {
       return new PreviewHandler(options);
@@ -25,7 +42,7 @@
      * override internal defaults
      * @type {Object}
      */
-    this.opts = $.extend(true, {}, defaults, options);
+    this.opts = Object.assign({},  defaults, options);
 
     this.keys = {
       up        : 38,
@@ -59,43 +76,38 @@
     
     init: function(){
       /**
-       * Caching jQuery selectors and checking for 
-       * required options
+       * Caching important DOM nodes when we need to use
+       * straight up Javascript instead of jQuery
+       * @type {[type]}
        */
       
-      this.$input = $(this.opts.input);
-      this.$output = $(this.opts.output);
+      this.inputNode = document.querySelector(this.opts.input);
+      this.outputNode = document.querySelector(this.opts.output);
 
       var reqs = this.checkRequirements();
       if (!reqs) {
         return;
       }
       
-      /**
-       * Caching important DOM nodes when we need to use
-       * straight up Javascript instead of jQuery
-       * @type {[type]}
-       */
-      this.inputNode = this.$input.get(0);
-      this.outputNode = this.$output.get(0);
+     
       this.outputNode.tabIndex = 0;
 
-      this.$input.on("keydown", $.proxy(this.onInputKeydown, this));
+      this.inputNode.addEventListener('keydown', this.onInputKeydown.bind(this));
 
-      $(document).on("keyup", $.proxy(this.modifierKeysUp, this));
-      $(document).on("keydown", $.proxy(this.modifierKeysDown, this));
+      document.addEventListener('keyup', this.modifierKeysUp.bind(this));
+      document.addEventListener('keydown', this.modifierKeysDown.bind(this));
 
-      this.$output.on("click", this.opts.outputDom, $.proxy(this.onClickPick, this));
-      this.$output.on("keyup", $.proxy(this.outputKeyup, this));
+      this.outputNode.addEventListener('click', this.onClickPick.bind(this));
+      this.outputNode.addEventListener('keydown', this.outputKeyup.bind(this));
     },
 
     checkRequirements: function(){
       var result = true;
-      if (!this.opts.input || !this.$input.length) {
+      if (!this.opts.input || !this.inputNode) {
         this.warn("input option not provided or element is missing");
         result = false;
       }
-      if (!this.opts.output || !this.$output.length) {
+      if (!this.opts.output || !this.outputNode) {
         this.warn("preview container not provided or element is missing");
         result = false;
       }
@@ -199,10 +211,10 @@
     },
 
     clearPreview: function(hide) {
-      this.$output.empty();
+      this.outputNode.innerHTML = "";
       this.states.isPreviewing = false;
       if (hide){
-        this.$output.hide();
+        this.outputNode.style.display = "none";
       }
     },
 
@@ -219,7 +231,7 @@
       var self = this;
 
       var tmpFrag = document.createDocumentFragment();
-      $.each(filteredData, function(i, el){
+      filteredData.forEach(function(el, i, arr){
         var item = document.createElement(self.opts.outputDom);
         
         if (typeof self.opts.outputTemplate === "function") {
@@ -234,36 +246,54 @@
         tmpFrag.appendChild(item);
       });
 
-      this.$output.append(tmpFrag).slideDown(200);
-      this.$collection = this.$output.children();
+      this.outputNode.appendChild(tmpFrag);
+      this.outputNode.style.display = "block";
+      this.collection = this.outputNode.children;
+    },
+
+    getIndex: function(node) {
+      var children = node.parentNode.childNodes;
+      var num = 0;
+      for (var i=0; i<children.length; i++) {
+          if (children[i]===node) { return num; }
+          if (children[i].nodeType===1) { num++; }
+      }
+      return -1;
     },
 
     navPreview: function(incrementBy) {
-      var activeIndex = this.$output.find("." + this.opts.activeClass).index();
+      var activeIndex = this.getIndex(this.outputNode.querySelector("." + this.opts.activeClass));
       var newItem = activeIndex + incrementBy;
 
-      var childLen = this.$collection.length;
+      var childLen = this.collection.length;
       if (newItem < 0) {
         newItem = childLen - 1;
       } else if (newItem > childLen - 1) {
         newItem = 0;
       }
 
-      this.$collection.removeClass(this.opts.activeClass).eq(newItem).addClass(this.opts.activeClass);
+      var self = this;
+      var collection = Array.prototype.slice.call(this.collection);
+      collection.forEach(function(el,i,ar){
+        el.classList.remove(self.opts.activeClass);
+        if (i === newItem) {
+          el.classList.add(self.opts.activeClass);
+        }
+      });
       this.useActiveText();
     },
 
     // probably should rename this to differ from the option
     getActiveText: function(andScroll){
-      var $newActive = this.$output.find("." + this.opts.activeClass);
+      var newActive = this.outputNode.querySelector("." + this.opts.activeClass);
       if (andScroll) {
-        this.scrollOutput($newActive);
+        this.scrollOutput(newActive);
       }
       var newText;
       if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText($newActive);
+        newText = this.opts.getActiveText(newActive);
       } else {
-        newText = $newActive.text();
+        newText = newActive.textContent;
       }
       return newText;
     },
@@ -274,21 +304,24 @@
     },
 
     onClickPick: function(e){
+      var clickedEl = e.target;
+      if(clickedEl.tagName.toLowerCase() !== this.opts.outputDom.toLowerCase()) {
+        return;
+      }
       var newText;
-      var $targ = $(e.target);
       if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText( $targ );
+        newText = this.opts.getActiveText( e.target );
       } else {
-        newText = $targ.text();
+        newText = e.target.textContent;
       }
 
       this.replaceInPlace(newText);
       this.clearPreview(true);
     },
 
-    scrollOutput: function($elem){
-      if ($elem.length) {
-        $elem.get(0).scrollIntoView(false);
+    scrollOutput: function(elem){
+      if (elem) {
+        elem.scrollIntoView(false);
       }
     },
 
@@ -299,7 +332,7 @@
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
-      this.$input.val(newVal + " ");
+      this.inputNode.value = newVal + " ";
       this.setCursorPosition(this.info.end);
     },
 

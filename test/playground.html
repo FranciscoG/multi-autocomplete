@@ -23,7 +23,6 @@
 
     </div>
 
-    <script src="jquery-2.2.0.min.js"></script>
     <script src="../dist/multicomplete.js"></script>
     <script src="testdata.js"></script>
     <script>
@@ -45,13 +44,13 @@
         have event listeners on then so I'm mocking up a chat box
         and adding a keyup event
       */
-      // $('#chatInput').on('keyup', function (e) {
-      //   // console.log(e.keyCode);
-      //   if (e.keyCode === 13) {
-      //     createChatMessage($(this).val());
-      //     $(this).val("");
-      //   }
-      // });
+      document.querySelector('#chatInput').addEventListener('keyup', function (e) {
+        // console.log(e.keyCode);
+        if (e.keyCode === 13) {
+          createChatMessage(this.value);
+          this.value = "";
+        }
+      });
 
       /*****************************************************/
       /*
@@ -109,11 +108,11 @@
             return "/" + str;
           }
         },
-        getActiveText: function($elem) {
-          if ( $elem.prop('tagName') === "SPAN" ) {
-            return $elem.text();
+        getActiveText: function(elem) {
+          if ( elem.tagName === "SPAN" ) {
+            return elem.textContent;
           } else {
-            return $elem.find('span').text();
+            return elem.querySelector('span').textContent;
           }
         },
         outputTemplate : function(marker, str) {

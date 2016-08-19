@@ -4,6 +4,7 @@
  * Object.assign
  * Function.bind()
  * addEventListener
+ * CustomEvent
  *
  * Object.Assign is the more recent one where only the last few versions of modern browsers have been
  * full supporting it.  The rest are just IE8 and below support. 
@@ -174,5 +175,31 @@ if (!Function.prototype.bind) {
       Window.prototype.addEventListener=addEventListener;
       Window.prototype.removeEventListener=removeEventListener;
     }
+  }
+})();
+
+/**
+ * Custom Event Polyfill
+ * https://github.com/krambuhl/custom-event-polyfill
+ */
+(function(){
+  try {
+    new window.CustomEvent("__test__");
+  } catch(e) {
+   var CustomEvent = function(event, params) {
+        var evt;
+        params = params || {
+            bubbles: false,
+            cancelable: false,
+            detail: undefined
+        };
+
+        evt = document.createEvent("CustomEvent");
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return evt;
+    };
+
+    CustomEvent.prototype = window.Event.prototype;
+    window.CustomEvent = CustomEvent; // expose definition to window
   }
 })();

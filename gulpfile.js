@@ -11,7 +11,7 @@ function handleError(err) {
 var concat = require("gulp-concat");
 
 gulp.task("concat", function() {
-  return gulp.src(["src/previewhandler.js","src/multicomplete.js"])
+  return gulp.src(["src/events.js", "src/previewhandler.js","src/multicomplete.js"])
     .pipe(concat("multicomplete.js"))
     .on("error", handleError)
     .pipe(gulp.dest("dist/"));

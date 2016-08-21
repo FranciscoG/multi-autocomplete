@@ -16,10 +16,7 @@
       output: null, // will be required 
       input: null, // will be required 
       outputDom : "li",
-      activeClass : "active",
-      beforeReplace: null,
-      getActiveText : null,
-      outputTemplate : null
+      activeClass : "active"
     };
 
     /**
@@ -55,6 +52,7 @@
       shiftDown : false
     };
 
+    this.init();
   }
 
   PreviewHandler.prototype = {
@@ -203,8 +201,10 @@
       }
     },
 
-    addToPreview: function(filteredData) {
-      console.log(filteredData);
+    addToPreview: function(filteredData, info) {
+      // console.log(filteredData);
+      console.log(this);
+      this.info = info;
 
       if (this.states.hasCancelled || filteredData.length === 0) {
         this.clearPreview(true);
@@ -219,8 +219,8 @@
       filteredData.forEach(function(el, i, arr){
         var item = document.createElement(self.opts.outputDom);
         
-        if (typeof self.opts.outputTemplate === "function") {
-          item.innerHTML = self.opts.outputTemplate(self.info.activeMarker, el);
+        if (typeof self.outputTemplateCB === "function") {
+          item.innerHTML = self.outputTemplateCB(self.info.activeMarker + el);
         } else {
           item.textContent = el;
         }
@@ -258,7 +258,7 @@
       }
 
       var self = this;
-      var collection = Array.prototype.slice.call(this.collection);
+      var collection = [].slice.call(this.collection);
       collection.forEach(function(el,i,ar){
         el.classList.remove(self.opts.activeClass);
         if (i === newItem) {
@@ -269,14 +269,14 @@
     },
 
     // probably should rename this to differ from the option
-    getActiveText: function(andScroll){
+    getHighlighted: function(andScroll){
       var newActive = this.outputNode.querySelector("." + this.opts.activeClass);
       if (andScroll) {
         this.scrollOutput(newActive);
       }
       var newText;
-      if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText(newActive);
+      if (typeof this.getActiveTextCB === "function") {
+        newText = this.getActiveTextCB(newActive);
       } else {
         newText = newActive.textContent;
       }
@@ -284,7 +284,7 @@
     },
 
     useActiveText: function(){
-      var newText = this.getActiveText(true);
+      var newText = this.getHighlighted(true);
       this.replaceInPlace(newText);
     },
 
@@ -294,8 +294,8 @@
         return;
       }
       var newText;
-      if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText( e.target );
+      if (typeof this.getActiveTextCB === "function") {
+        newText = this.getActiveTextCB( e.target );
       } else {
         newText = e.target.textContent;
       }
@@ -310,10 +310,15 @@
       }
     },
 
+    /**
+     * Replaces the text
+     * @param  {str} str    the string to be replaced
+     * @return {[type]}     [description]
+     */
     replaceInPlace: function(str){
       var val = this.info.val;
-      if (typeof this.opts.beforeReplace === "function") {
-        str = this.opts.beforeReplace(this.info.activeMarker, str);
+      if (typeof this.beforeReplaceCB === "function") {
+        str = this.beforeReplaceCB(this.info.activeMarker + str);
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
@@ -330,12 +335,22 @@
           range.select();
       } else {
           elem.focus();
-          if (elem.selectionStart !== void(0)) { // void(0) always gives you undefined
+          if (elem.selectionStart !== void(0)) {
               elem.setSelectionRange(pos, pos);
           }
       }
       this.states.inputHasFocus = true;
-    }
+    },
+
+    beforeReplace: function(cb){
+      this.beforeReplaceCB = cb || null;
+    },
+    getActiveText: function(cb){
+      this.getActiveTextCB = cb || null;
+    },
+    outputTemplate: function(cb){
+      this.outputTemplateCB = cb || null;
+    },
 
   };
 

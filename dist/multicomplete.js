@@ -1,20 +1,36 @@
+// src: https://davidwalsh.name/pubsub-javascript
+var events = (function(){
+  var topics = {};
+  var hOP = topics.hasOwnProperty;
+
+  return {
+    subscribe: function(topic, listener) {
+      // Create the topic's object if not yet created
+      if(!hOP.call(topics, topic)) topics[topic] = [];
+
+      // Add the listener to queue
+      var index = topics[topic].push(listener) -1;
+
+      // Provide handle back for removal of topic
+      return {
+        remove: function() {
+          delete topics[topic][index];
+        }
+      };
+    },
+    publish: function(topic, info) {
+      // If the topic doesn't exist, or there's no listeners in queue, just leave
+      if(!hOP.call(topics, topic)) return;
+
+      // Cycle through topics queue, fire!
+      topics[topic].forEach(function(item) {
+          item(info != undefined ? info : {});
+      });
+    }
+  };
+})();
 (function(){
   "use strict";
-
-  /**
-   * In this part of the lib I'm using jQuery for backwards 
-   * browser compatibility, mainly for these:
-   *
-   * $.extend  - instead of using Object.assign
-   * $.proxy   - instead of function.bind()
-   * $.grep    - instead of Array.filter
-   * $.on      - instead of addEventListener and event delegation
-   * $         - instead of querySelector and querySelectorAll
-   *
-   * I'm considering maybe just adding a polyfills.js and converting 
-   * this all to vanilla JS.  But for now I'm sticking to jQuery
-   * I really don't want to deal with all the things jQuery fixes
-   */
 
   /* global jQuery */
 
@@ -31,10 +47,7 @@
       output: null, // will be required 
       input: null, // will be required 
       outputDom : "li",
-      activeClass : "active",
-      beforeReplace: null,
-      getActiveText : null,
-      outputTemplate : null
+      activeClass : "active"
     };
 
     /**
@@ -70,6 +83,7 @@
       shiftDown : false
     };
 
+    this.init();
   }
 
   PreviewHandler.prototype = {
@@ -218,8 +232,10 @@
       }
     },
 
-    addToPreview: function(filteredData) {
-      console.log(filteredData);
+    addToPreview: function(filteredData, info) {
+      // console.log(filteredData);
+      console.log(this);
+      this.info = info;
 
       if (this.states.hasCancelled || filteredData.length === 0) {
         this.clearPreview(true);
@@ -234,8 +250,8 @@
       filteredData.forEach(function(el, i, arr){
         var item = document.createElement(self.opts.outputDom);
         
-        if (typeof self.opts.outputTemplate === "function") {
-          item.innerHTML = self.opts.outputTemplate(self.info.activeMarker, el);
+        if (typeof self.outputTemplateCB === "function") {
+          item.innerHTML = self.outputTemplateCB(self.info.activeMarker + el);
         } else {
           item.textContent = el;
         }
@@ -273,7 +289,7 @@
       }
 
       var self = this;
-      var collection = Array.prototype.slice.call(this.collection);
+      var collection = [].slice.call(this.collection);
       collection.forEach(function(el,i,ar){
         el.classList.remove(self.opts.activeClass);
         if (i === newItem) {
@@ -284,14 +300,14 @@
     },
 
     // probably should rename this to differ from the option
-    getActiveText: function(andScroll){
+    getHighlighted: function(andScroll){
       var newActive = this.outputNode.querySelector("." + this.opts.activeClass);
       if (andScroll) {
         this.scrollOutput(newActive);
       }
       var newText;
-      if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText(newActive);
+      if (typeof this.getActiveTextCB === "function") {
+        newText = this.getActiveTextCB(newActive);
       } else {
         newText = newActive.textContent;
       }
@@ -299,7 +315,7 @@
     },
 
     useActiveText: function(){
-      var newText = this.getActiveText(true);
+      var newText = this.getHighlighted(true);
       this.replaceInPlace(newText);
     },
 
@@ -309,8 +325,8 @@
         return;
       }
       var newText;
-      if (typeof this.opts.getActiveText === "function") {
-        newText = this.opts.getActiveText( e.target );
+      if (typeof this.getActiveTextCB === "function") {
+        newText = this.getActiveTextCB( e.target );
       } else {
         newText = e.target.textContent;
       }
@@ -325,10 +341,15 @@
       }
     },
 
+    /**
+     * Replaces the text
+     * @param  {str} str    the string to be replaced
+     * @return {[type]}     [description]
+     */
     replaceInPlace: function(str){
       var val = this.info.val;
-      if (typeof this.opts.beforeReplace === "function") {
-        str = this.opts.beforeReplace(this.info.activeMarker, str);
+      if (typeof this.beforeReplaceCB === "function") {
+        str = this.beforeReplaceCB(this.info.activeMarker + str);
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
@@ -345,12 +366,22 @@
           range.select();
       } else {
           elem.focus();
-          if (elem.selectionStart !== void(0)) { // void(0) always gives you undefined
+          if (elem.selectionStart !== void(0)) {
               elem.setSelectionRange(pos, pos);
           }
       }
       this.states.inputHasFocus = true;
-    }
+    },
+
+    beforeReplace: function(cb){
+      this.beforeReplaceCB = cb || null;
+    },
+    getActiveText: function(cb){
+      this.getActiveTextCB = cb || null;
+    },
+    outputTemplate: function(cb){
+      this.outputTemplateCB = cb || null;
+    },
 
   };
 
@@ -394,6 +425,10 @@
     this.opts = Object.assign({},  this.defaults, options);
 
     this.init();
+
+    return {
+      onData : this.subscribe.bind(this)
+    }
   }
 
   MultiComplete.prototype = {
@@ -427,11 +462,6 @@
        * Start listening for input keyup
        */
       this.inputNode.addEventListener('keyup', this.onInputKeyup.bind(this));
-
-
-      /* global PreviewHandler */
-      this.previewhandler = new PreviewHandler(this.opts);
-      this.previewhandler.init();
     },
 
     checkRequirements: function(){
@@ -529,7 +559,7 @@
       return [startIndex, endIndex];
     },
 
-    testCharAndFilter: function(char, word) {
+    testChar: function(char, word) {
       if (this.markersRegex.test(char)) {
         this.info.activeMarker = char;
         return this.beginFiltering(char, word);
@@ -563,9 +593,9 @@
       };
 
       var firstCharOfWord = currentWord.charAt(0);
-      var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
+      var filtered = this.testChar(firstCharOfWord, this.info.filterStr);
       
-      this.sendToPreview(filtered);
+      this.publish(filtered);
     },
 
     /**
@@ -603,9 +633,14 @@
       });
     },
 
-    sendToPreview: function(filteredData) {
-      this.previewhandler.info = this.info;
-      this.previewhandler.addToPreview(filteredData);
+    publish: function(filteredData) {
+      if (typeof this.subscribeCB === 'function') {
+        this.subscribeCB(filteredData, this.info);
+      }
+    },
+
+    subscribe: function(cb){
+      this.subscribeCB = cb || function(){};
     }
 
   };

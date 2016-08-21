@@ -96,35 +96,44 @@
         input: "#chatInput",
         output: "#preview-container",
         datasets : datasets,
-        fuzzyFilter : false,
-        beforeReplace: function(marker, str) {
-          if (marker === ":") {
-            return ":" + str + ":";
-          }
-          if (marker === "@") {
-            return "@" + str;
-          }
-          if (marker === "/") {
-            return "/" + str;
-          }
-        },
-        getActiveText: function(elem) {
-          if ( elem.tagName === "SPAN" ) {
-            return elem.textContent;
-          } else {
-            return elem.querySelector('span').textContent;
-          }
-        },
-        outputTemplate : function(marker, str) {
-          if (marker === ":") {
-            return 'emoji: <span>'+str+'</span>';
-          }
-          if (marker === "@") {
-            return 'mention: <span>'+str+'</span>';
-          }
-          if (marker === "/") {
-            return 'command: <span>'+str+'</span>';
-          }
+        fuzzyFilter : false
+      });
+
+      var pv = new PreviewHandler({
+        input: "#chatInput",
+        output: "#preview-container"
+      });
+
+      mc.onData(pv.addToPreview.bind(pv));
+
+      pv.beforeReplace(function(str) {
+        var marker = str.charAt(0);
+        if (marker === ":") {
+          return str + ":";
+        }
+        if (marker === "@" || marker === "/") {
+          return str;
+        }
+      });
+
+      pv.getActiveText(function(elem) {
+        if ( elem.tagName === "SPAN" ) {
+          return elem.textContent;
+        } else {
+          return elem.querySelector('span').textContent;
+        }
+      });
+
+      pv.outputTemplate(function(str) {
+        var marker = str.charAt(0);
+        if (marker === ":") {
+          return 'emoji: <span>'+str+'</span>';
+        }
+        if (marker === "@") {
+          return 'mention: <span>'+str+'</span>';
+        }
+        if (marker === "/") {
+          return 'command: <span>'+str+'</span>';
         }
       });
 

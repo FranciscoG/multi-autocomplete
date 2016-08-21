@@ -23,6 +23,10 @@
     this.opts = Object.assign({},  this.defaults, options);
 
     this.init();
+
+    return {
+      onData : this.subscribe.bind(this)
+    }
   }
 
   MultiComplete.prototype = {
@@ -56,11 +60,6 @@
        * Start listening for input keyup
        */
       this.inputNode.addEventListener('keyup', this.onInputKeyup.bind(this));
-
-
-      /* global PreviewHandler */
-      this.previewhandler = new PreviewHandler(this.opts);
-      this.previewhandler.init();
     },
 
     checkRequirements: function(){
@@ -158,7 +157,7 @@
       return [startIndex, endIndex];
     },
 
-    testCharAndFilter: function(char, word) {
+    testChar: function(char, word) {
       if (this.markersRegex.test(char)) {
         this.info.activeMarker = char;
         return this.beginFiltering(char, word);
@@ -192,9 +191,9 @@
       };
 
       var firstCharOfWord = currentWord.charAt(0);
-      var filtered = this.testCharAndFilter(firstCharOfWord, this.info.filterStr);
+      var filtered = this.testChar(firstCharOfWord, this.info.filterStr);
       
-      this.sendToPreview(filtered);
+      this.publish(filtered);
     },
 
     /**
@@ -232,9 +231,14 @@
       });
     },
 
-    sendToPreview: function(filteredData) {
-      this.previewhandler.info = this.info;
-      this.previewhandler.addToPreview(filteredData);
+    publish: function(filteredData) {
+      if (typeof this.subscribeCB === 'function') {
+        this.subscribeCB(filteredData, this.info);
+      }
+    },
+
+    subscribe: function(cb){
+      this.subscribeCB = cb || function(){};
     }
 
   };

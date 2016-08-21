@@ -1,21 +1,6 @@
 (function(){
   "use strict";
 
-  /**
-   * In this part of the lib I'm using jQuery for backwards 
-   * browser compatibility, mainly for these:
-   *
-   * $.extend  - instead of using Object.assign
-   * $.proxy   - instead of function.bind()
-   * $.grep    - instead of Array.filter
-   * $.on      - instead of addEventListener and event delegation
-   * $         - instead of querySelector and querySelectorAll
-   *
-   * I'm considering maybe just adding a polyfills.js and converting 
-   * this all to vanilla JS.  But for now I'm sticking to jQuery
-   * I really don't want to deal with all the things jQuery fixes
-   */
-
   /* global jQuery */
 
   function PreviewHandler(options){

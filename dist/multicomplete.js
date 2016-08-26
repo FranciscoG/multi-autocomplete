@@ -172,7 +172,7 @@ var events = (function(){
         case this.keys.tab:
         case this.keys.down:
           // if preview Items lengh === 1 do like selecting word
-          if (this.info.filteredDataLength === 1) {
+          if (this.info.filteredData.length === 1) {
             this.useActiveText();
             this.clearPreview(true);
             e.preventDefault();
@@ -247,11 +247,22 @@ var events = (function(){
       var self = this;
 
       var tmpFrag = document.createDocumentFragment();
+
+      var index0;
+      if (typeof this.insertFirstCB === 'function') {
+        index0 = this.insertFirstCB();
+        if (index0.nodeType) {
+          tmpFrag.appendChild(index0);
+        } else {
+          this.warn("When using insertFirst you must return a valid node element other wise appendChild will break");
+        }
+      }
+
       filteredData.forEach(function(el, i, arr){
         var item = document.createElement(self.opts.outputDom);
         
         if (typeof self.outputTemplateCB === "function") {
-          item.innerHTML = self.outputTemplateCB(self.info.activeMarker + el);
+          item.innerHTML = self.outputTemplateCB(self.info.activeMarker, el);
         } else {
           item.textContent = el;
         }
@@ -349,7 +360,7 @@ var events = (function(){
     replaceInPlace: function(str){
       var val = this.info.val;
       if (typeof this.beforeReplaceCB === "function") {
-        str = this.beforeReplaceCB(this.info.activeMarker + str);
+        str = this.beforeReplaceCB(this.info.activeMarker, str);
       }
       var newVal = val.slice(0, this.info.start) + str + val.slice(this.info.end, val.length - 1);
       this.info.end = this.info.start + str.length + 1;
@@ -382,6 +393,9 @@ var events = (function(){
     outputTemplate: function(cb){
       this.outputTemplateCB = cb || null;
     },
+    insertFirst: function(cb){
+      this.insertFirstCB = cb || null;
+    }
 
   };
 
@@ -446,13 +460,6 @@ var events = (function(){
        * to indicate when to start filtering data
        */
       this.markersRegex = this.getMarkers();
-
-      /**
-       * Setting some defaults internal variables
-       */
-      this.info = {
-        filteredDataLength: 0
-      };
       
       /**
        * Start listening for input keyup
@@ -606,7 +613,6 @@ var events = (function(){
       }
       var dataToFilter = this.opts.datasets[marker];
       var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
-      this.info.filteredDataLength = filteredData.length;
       this.info.filteredData = filteredData;
       return filteredData;
     },
@@ -635,7 +641,7 @@ var events = (function(){
       }
     },
 
-    subscribe: function(cb){
+    onData: function(cb){
       this.subscribeCB = cb || function(){};
     }
 

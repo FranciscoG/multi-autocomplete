@@ -44,13 +44,6 @@
        * to indicate when to start filtering data
        */
       this.markersRegex = this.getMarkers();
-
-      /**
-       * Setting some defaults internal variables
-       */
-      this.info = {
-        filteredDataLength: 0
-      };
       
       /**
        * Start listening for input keyup
@@ -204,7 +197,6 @@
       }
       var dataToFilter = this.opts.datasets[marker];
       var filteredData = this.getFilteredData(filterStr, this.opts.fuzzyFilter, dataToFilter);
-      this.info.filteredDataLength = filteredData.length;
       this.info.filteredData = filteredData;
       return filteredData;
     },
@@ -233,7 +225,7 @@
       }
     },
 
-    subscribe: function(cb){
+    onData: function(cb){
       this.subscribeCB = cb || function(){};
     }
 

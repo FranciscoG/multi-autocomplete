@@ -103,18 +103,25 @@
         output: "#preview-container"
       });
 
-      mc.subscribe(pv.addToPreview.bind(pv));
+      mc.onData(pv.addToPreview.bind(pv));
 
-      pv.beforeReplace(function(str) {
-        var marker = str.charAt(0);
-        if (marker === ":") {
-          return str + ":";
-        }
-        if (marker === "@" || marker === "/") {
-          return str;
-        }
-      });
+      /**
+       * There are three hooks that allow you to customize how the data is 
+       * handled in the preview.
+       */
+      
+      // when you select an active item, this will alter the string before
+      // putting back into the input box
+      // pv.beforeReplace(function(marker, str) {
+      //   if (marker === ":") {
+      //     return str + ":";
+      //   }
+      //   return str;
+      // });
 
+      // when you click on a preview item, this allows you to set where the string 
+      // is taken from.  
+      // The default is just the textContent of the node you clicked on
       pv.getActiveText(function(elem) {
         if ( elem.tagName === "SPAN" ) {
           return elem.textContent;
@@ -123,10 +130,10 @@
         }
       });
 
-      pv.outputTemplate(function(str) {
-        var marker = str.charAt(0);
+      // this allows you to change the html that's being output for each item
+      pv.outputTemplate(function(marker, str) {
         if (marker === ":") {
-          return 'emoji: <span>'+str+'</span>';
+          return 'emoji: <span>:'+str+':</span>';
         }
         if (marker === "@") {
           return 'mention: <span>'+str+'</span>';
@@ -134,6 +141,13 @@
         if (marker === "/") {
           return 'command: <span>'+str+'</span>';
         }
+      });
+
+      pv.insertFirst(function(){
+        var li = document.createElement('li');
+        li.className = "helper";
+        li.textContent = "use up/down or tab/right";
+        return li;
       });
 
     </script>

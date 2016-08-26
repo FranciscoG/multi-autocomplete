@@ -234,7 +234,7 @@ var events = (function(){
 
     addToPreview: function(filteredData, info) {
       // console.log(filteredData);
-      console.log(this);
+      // console.log(this);
       this.info = info;
 
       if (this.states.hasCancelled || filteredData.length === 0) {
@@ -414,7 +414,7 @@ var events = (function(){
      * @type {Object}
      */
     this.defaults = {
-      fuzzyFilter : true
+      fuzzyFilter : false
     };
 
     /**
@@ -425,10 +425,6 @@ var events = (function(){
     this.opts = Object.assign({},  this.defaults, options);
 
     this.init();
-
-    return {
-      onData : this.subscribe.bind(this)
-    }
   }
 
   MultiComplete.prototype = {
@@ -449,7 +445,7 @@ var events = (function(){
        * Create a regex from the markers for the dataset
        * to indicate when to start filtering data
        */
-      this.getMarkers();
+      this.markersRegex = this.getMarkers();
 
       /**
        * Setting some defaults internal variables
@@ -484,7 +480,7 @@ var events = (function(){
           markers += key;
         }
       }
-      this.markersRegex = this.makeRegex(markers);
+      return this.makeRegex(markers);
     },
 
     /**

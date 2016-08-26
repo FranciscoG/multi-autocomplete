@@ -1,45 +1,64 @@
-/* global describe, expect, it, MultiComplete, datasets, beforeEach, afterEach */
-describe("Multicomplete suite", function() {
+/* global describe, expect, it, MultiComplete, PreviewHandler, datasets, beforeEach, afterEach */
 
-  var  mc;
+function setup(){
+  var mc, pv; 
+
+  mc = new MultiComplete({
+    input: "#chatInput",
+    output: "#preview-container",
+    datasets : datasets
+  });
+
+  pv = new PreviewHandler({
+    input: "#chatInput",
+    output: "#preview-container"
+  });
+
+  mc.subscribe(pv.addToPreview.bind(pv));
+
+  pv.beforeReplace(function(str) {
+    var marker = str.charAt(0);
+    if (marker === ":") {
+      return str + ":";
+    }
+    if (marker === "@" || marker === "/") {
+      return str;
+    }
+  });
+
+  pv.getActiveText(function(elem) {
+    if ( elem.tagName === "SPAN" ) {
+      return elem.textContent;
+    } else {
+      return elem.querySelector('span').textContent;
+    }
+  });
+
+  pv.outputTemplate(function(str) {
+    var marker = str.charAt(0);
+    if (marker === ":") {
+      return 'emoji: <span>'+str+'</span>';
+    }
+    if (marker === "@") {
+      return 'mention: <span>'+str+'</span>';
+    }
+    if (marker === "/") {
+      return 'command: <span>'+str+'</span>';
+    }
+  });
+
+  return [mc,pv];
+}
+
+describe("Multicomplete test", function() {
+
+  var mc;
 
     beforeEach(function(){
       var fixture = '<ul id="preview-container"></ul><input type="text" id="chatInput" placeholder="enter a chat message" autocomplete="off" maxlength="255" />';
-      document.body.insertAdjacentHTML(
-            "afterbegin", 
-            fixture);
 
-        mc = new MultiComplete({
-          input: "#chatInput",
-          output: "#preview-container",
-          datasets : datasets,
-          fuzzyFilter : false,
-          beforeReplace: function(marker, str) {
-            if (marker === ":") {
-              return ":" + str + ":";
-            }
-            if (marker === "@") {
-              return "@" + str;
-            }
-            if (marker === "/") {
-              return "/" + str;
-            }
-          },
-          getActiveText: function(elem) {
-            return elem.querySelector("span").textContent;
-          },
-          outputTemplate : function(marker, str) {
-            if (marker === ":") {
-              return "emoji: <span>"+str+"</span>";
-            }
-            if (marker === "@") {
-              return "mention: <span>"+str+"</span>";
-            }
-            if (marker === "/") {
-              return "command: <span>"+str+"</span>";
-            }
-          }
-        });
+      document.body.insertAdjacentHTML("afterbegin", fixture);
+      mc = setup()[0];
     });
 
     afterEach(function(){
@@ -59,13 +78,13 @@ describe("Multicomplete suite", function() {
     });
 
     it("Should make regex from the markers in the datasets", function(){
-        expect(mc.markersRegex).toEqual(/[@:\/]/i);
+        expect(mc.getMarkers()).toEqual(/[@:\/]/i);
     });
 
-    it("testCharAndFilter should return an array with", function(){
-      expect(mc.testCharAndFilter(":","sm")).toEqual(["smiley", "smile"]);
-      expect(mc.testCharAndFilter("/","b")).toEqual(["ban"]);
-      expect(mc.testCharAndFilter("@","m")).toEqual(["mountain", "moe"]);
+    it("testChar should return an array with", function(){
+      expect(mc.testChar(":","sm")).toEqual(["smiley", "smile"]);
+      expect(mc.testChar("/","b")).toEqual(["ban"]);
+      expect(mc.testChar("@","m")).toEqual(["mountain", "moe"]);
     });
 
     it("makeRegex should properly escape regex characters", function(){
@@ -126,5 +145,28 @@ describe("Multicomplete suite", function() {
 
       expect(mc.info.filteredData).toEqual(["smiley", "open_mouth", "smile", "unamused", "mask", "thumbsup", "thumbsdown"]);
     });
+
+});
+
+describe("PreviewHandler test", function() {
+  var mc, pv;
+
+  beforeEach(function(){
+    var fixture = '<ul id="preview-container"></ul><input type="text" id="chatInput" placeholder="enter a chat message" autocomplete="off" maxlength="255" />';
+
+    document.body.insertAdjacentHTML("afterbegin", fixture);
+    mc = setup()[0];
+    pv = setup()[1];
+  });
+
+  afterEach(function(){
+    mc = null;
+    pv = null;
+  });
+
+  it("Should throw an error when input option is not given", function(){
+    expect( function(){ pv = new PreviewHandler(); } ).toThrow(new Error("input option not provided or element is missing"));
+  });
+
 
 });

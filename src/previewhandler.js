@@ -203,7 +203,7 @@
 
     addToPreview: function(filteredData, info) {
       // console.log(filteredData);
-      console.log(this);
+      // console.log(this);
       this.info = info;
 
       if (this.states.hasCancelled || filteredData.length === 0) {

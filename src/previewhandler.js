@@ -216,17 +216,6 @@
       var self = this;
 
       var tmpFrag = document.createDocumentFragment();
-
-      var index0;
-      if (typeof this.insertFirstCB === 'function') {
-        index0 = this.insertFirstCB();
-        if (index0.nodeType) {
-          tmpFrag.appendChild(index0);
-        } else {
-          this.warn("When using insertFirst you must return a valid node element other wise appendChild will break");
-        }
-      }
-
       filteredData.forEach(function(el, i, arr){
         var item = document.createElement(self.opts.outputDom);
         
@@ -361,9 +350,6 @@
     },
     outputTemplate: function(cb){
       this.outputTemplateCB = cb || null;
-    },
-    insertFirst: function(cb){
-      this.insertFirstCB = cb || null;
     }
 
   };
